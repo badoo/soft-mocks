@@ -1684,6 +1684,27 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $this->cur_class = $Node->name;
     }
 
+    public function rewriteExpr_New(\PhpParser\Node\Expr\New_ $Node)
+    {
+        if ($Node->class instanceof \PhpParser\Node\Name) {
+            $class = $Node->class->toString();
+        } else {
+            $class = $Node->class;
+        }
+
+        $NewNode = new \PhpParser\Node\Expr\StaticCall(
+            new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
+            "callNew",
+            [
+                $this->nodeNameToArg($class),
+                $this->nodeArgsToArray($Node->args),
+            ]
+        );
+        $NewNode->setLine($Node->getLine());
+
+        return $NewNode;
+    }
+
     public function rewriteStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $Node)
     {
         if ($this->in_interface) return null;

@@ -106,6 +106,25 @@ Arguments are the same as for redefineFunction, but $class is argument is introd
 
 As an argument, $class accepts a class name or a trait name.
 
+Redefine constructors
+==
+
+This method let you redefine constructor for both user-defined and built-in classes.
+
+Definition:
+ ```
+ \QA\SoftMocks::redefineNew($class, $constructorFunc)
+ ```
+
+Usage example (redefine \DateTime constructor):
+```
+\QA\SoftMocks::redefineNew('DateTime', function() {
+    return new \DateTime('2015-02-03 00:00:00');
+});
+
+var_dump((new \DateTime)->format('c')); // string(25) "2015-02-03T00:00:00+03:00"
+```
+
 Redefining functions that are generators
 ==
 This method that lets you replace a generator function call with another \Generator. Generators differ from regular functions in that you can't return a value using "return"; you have to use "yield".
