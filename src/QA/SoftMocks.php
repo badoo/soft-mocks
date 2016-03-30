@@ -949,16 +949,60 @@ class SoftMocks
         return call_user_func_array($func, $params);
     }
 
-    public static function callNew($class, $args)
+    public static function callNew($class, $args, $scope)
     {
         if (isset(self::$new_mocks[$class])) {
             return call_user_func_array(self::$new_mocks[$class], $args);
         }
 
         $Rc = new \ReflectionClass($class);
-        return $Rc->newInstanceArgs($args);
+        $Constructor = $Rc->getConstructor();
+
+        if ($Constructor && self::isConstructorCanBeForced($Constructor, $scope)) {
+            $instance = $Rc->newInstanceWithoutConstructor();
+            $Constructor->setAccessible(true);
+            $Constructor->invokeArgs($instance, $args);
+            $Constructor->setAccessible(false);
+        } else {
+            $instance = $Rc->newInstanceArgs($args);
+        }
+
+        return $instance;
     }
 
+    private static function isConstructorCanBeForced(\ReflectionMethod $constructor, $scope)
+    {
+        if ($constructor->isPublic()) {
+            return false;
+        }
+
+        $class = $constructor->getDeclaringClass();
+        if ($constructor->isPrivate() && $class->getName() === $scope) {
+            return true;
+        }
+
+        if ($constructor->isProtected() && self::isSubclassOf(new \ReflectionClass($scope), $class)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function isSubclassOf(\ReflectionClass $child, \ReflectionClass $class)
+    {
+        if ($child->getName() === $class->getName()) {
+            return true;
+        }
+        
+        $parent = $child->getParentClass();
+
+        if (null === $parent) {
+            return false;
+        }
+
+        return self::isSubclassOf($parent, $class);
+    }
+    
     public static function getConst($namespace, $const)
     {
         if ($namespace !== '') {
@@ -1691,6 +1735,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             [
                 $this->nodeNameToArg($class),
                 $this->nodeArgsToArray($Node->args),
+                $this->nodeNameToArg(new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('__CLASS__')))
             ]
         );
         $NewNode->setLine($Node->getLine());
