@@ -1496,6 +1496,8 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         'null'  => true,
     ];
 
+    private $classesUses = [];
+    
     public static function isFunctionIgnored($func)
     {
         return isset(self::$ignore_functions[$func]);
@@ -1684,10 +1686,41 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $this->cur_class = $Node->name;
     }
 
+    public function beforeStmt_Namespace(\PhpParser\Node\Stmt\Namespace_ $Node)
+    {
+        $this->classesUses = [];
+        return $Node;
+    }
+
+    public function rewriteStmt_Namespace(\PhpParser\Node\Stmt\Namespace_ $Node)
+    {
+        $this->classesUses = [];
+        return $Node;
+    }
+
     public function rewriteExpr_New(\PhpParser\Node\Expr\New_ $Node)
     {
         if ($Node->class instanceof \PhpParser\Node\Name) {
-            $class = $Node->class->toString();
+            $className = $Node->class->toString();
+
+            if (in_array($className, ['static', 'self'], true)) { // Do not override new for cases `new static` or `new self`
+                return $Node;
+            }
+
+            if (class_exists($className)) { // Do not add namespace for internal classes
+                $class = $this->nodeNameToArg($className);
+            } elseif (isset($this->classesUses[$className])) { // Do not add namespace for added via use keyword
+                $class = $this->nodeNameToArg($this->classesUses[$className]);
+            } else {
+                $class = new \PhpParser\Node\Arg(
+                    new \PhpParser\Node\Expr\BinaryOp\Concat(
+                        new \PhpParser\Node\Expr\ConstFetch(
+                            new \PhpParser\Node\Name('__NAMESPACE__')
+                        ),
+                        new \PhpParser\Node\Scalar\String_('\\'.$className)
+                    )
+                );
+            }
         } else {
             $class = $Node->class;
         }
