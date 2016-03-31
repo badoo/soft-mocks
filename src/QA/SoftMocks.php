@@ -956,53 +956,28 @@ class SoftMocks
         }
 
         $Rc = new \ReflectionClass($class);
-        $Constructor = $Rc->getConstructor();
 
-        if ($Constructor && self::isConstructorCanBeForced($Constructor, $scope)) {
-            $instance = $Rc->newInstanceWithoutConstructor();
-            $Constructor->setAccessible(true);
-            $Constructor->invokeArgs($instance, $args);
-            $Constructor->setAccessible(false);
+        if (empty($scope) || $scope === $Rc->getName()) {
+            $Constructor = $Rc->getConstructor();
+
+            if ($Constructor && !$Constructor->isPublic()) {
+                $instance = $Rc->newInstanceWithoutConstructor();
+                $Constructor->setAccessible(true);
+                $Constructor->invokeArgs($instance, $args);
+            } else {
+                $instance = $Rc->newInstanceArgs($args);
+            }
         } else {
-            $instance = $Rc->newInstanceArgs($args);
+            $factory = \Closure::bind(function($class, $args) {
+                return new $class(...$args);
+            }, null, $scope);
+
+            $instance = $factory($class, $args);
         }
 
         return $instance;
     }
 
-    private static function isConstructorCanBeForced(\ReflectionMethod $constructor, $scope)
-    {
-        if ($constructor->isPublic()) {
-            return false;
-        }
-
-        $class = $constructor->getDeclaringClass();
-        if ($constructor->isPrivate() && $class->getName() === $scope) {
-            return true;
-        }
-
-        if ($constructor->isProtected() && self::isSubclassOf(new \ReflectionClass($scope), $class)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static function isSubclassOf(\ReflectionClass $child, \ReflectionClass $class)
-    {
-        if ($child->getName() === $class->getName()) {
-            return true;
-        }
-        
-        $parent = $child->getParentClass();
-
-        if (null === $parent) {
-            return false;
-        }
-
-        return self::isSubclassOf($parent, $class);
-    }
-    
     public static function getConst($namespace, $const)
     {
         if ($namespace !== '') {
@@ -1735,7 +1710,14 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             [
                 $this->nodeNameToArg($class),
                 $this->nodeArgsToArray($Node->args),
-                $this->nodeNameToArg(new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('__CLASS__')))
+                $this->nodeNameToArg(
+                    new \PhpParser\Node\Expr\ErrorSuppress(
+                        new \PhpParser\Node\Expr\FuncCall(
+                            new \PhpParser\Node\Name('get_called_class'),
+                            []
+                        )
+                    )
+                )
             ]
         );
         $NewNode->setLine($Node->getLine());
