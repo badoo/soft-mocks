@@ -949,33 +949,19 @@ class SoftMocks
         return call_user_func_array($func, $params);
     }
 
-    public static function callNew($class, $args, $scope)
+    public static function hasConstruct($class)
     {
-        if (isset(self::$new_mocks[$class])) {
-            return call_user_func_array(self::$new_mocks[$class], $args);
-        }
+        return isset(self::$new_mocks[$class]);
+    }
 
-        $Rc = new \ReflectionClass($class);
+    public static function callConstruct($class, $args)
+    {
+        return call_user_func_array(self::$new_mocks[$class], $args);
+    }
 
-        if (empty($scope) || $scope === $Rc->getName()) {
-            $Constructor = $Rc->getConstructor();
-
-            if ($Constructor && !$Constructor->isPublic()) {
-                $instance = $Rc->newInstanceWithoutConstructor();
-                $Constructor->setAccessible(true);
-                $Constructor->invokeArgs($instance, $args);
-            } else {
-                $instance = $Rc->newInstanceArgs($args);
-            }
-        } else {
-            $factory = \Closure::bind(function($class, $args) {
-                return new $class(...$args);
-            }, null, $scope);
-
-            $instance = $factory($class, $args);
-        }
-
-        return $instance;
+    public static function dummy($obj)
+    {
+        return $obj;
     }
 
     public static function getConst($namespace, $const)
@@ -1706,20 +1692,29 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
         $NewNode = new \PhpParser\Node\Expr\StaticCall(
             new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
-            "callNew",
+            'dummy',
             [
-                $this->nodeNameToArg($class),
-                $this->nodeArgsToArray($Node->args),
-                $this->nodeNameToArg(
-                    new \PhpParser\Node\Expr\ErrorSuppress(
-                        new \PhpParser\Node\Expr\FuncCall(
-                            new \PhpParser\Node\Name('get_called_class'),
-                            []
-                        )
-                    )
-                )
+                new \PhpParser\Node\Expr\Ternary(
+                    new \PhpParser\Node\Expr\StaticCall(
+                        new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
+                        "hasConstruct",
+                        [
+                            $this->nodeNameToArg($class),
+                        ]
+                    ),
+                    new \PhpParser\Node\Expr\StaticCall(
+                        new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
+                        "callConstruct",
+                        [
+                            $this->nodeNameToArg($class),
+                            $this->nodeArgsToArray($Node->args),
+                        ]
+                    ),
+                    $Node
+                ),
             ]
         );
+
         $NewNode->setLine($Node->getLine());
 
         return $NewNode;
