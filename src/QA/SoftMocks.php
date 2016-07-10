@@ -949,12 +949,16 @@ class SoftMocks
         return call_user_func_array($func, $params);
     }
 
-    public static function hasConstruct($class)
+    public static function getNewEval($class, $argsString)
     {
-        return isset(self::$new_mocks[$class]);
+        if (isset(self::$new_mocks[$class])) {
+            return "return \\QA\\SoftMocks::callNew('$class',array($argsString));";
+        }
+
+        return "return new $class($argsString);";
     }
 
-    public static function callConstruct($class, $args)
+    public static function callNew($class, $args)
     {
         return call_user_func_array(self::$new_mocks[$class], $args);
     }
@@ -1690,28 +1694,26 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             $class = $Node->class;
         }
 
+        $printer = new \PhpParser\PrettyPrinter\Standard();
+
         $NewNode = new \PhpParser\Node\Expr\StaticCall(
             new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
             'dummy',
             [
-                new \PhpParser\Node\Expr\Ternary(
+                new \PhpParser\Node\Expr\Eval_(
                     new \PhpParser\Node\Expr\StaticCall(
                         new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
-                        "hasConstruct",
+                        'getNewEval',
                         [
                             $this->nodeNameToArg($class),
+                            new \PhpParser\Node\Scalar\String_(
+                                implode(',', array_map(function(\PhpParser\Node\Arg $a) use ($printer) {
+                                        return $printer->prettyPrintExpr($a->value);
+                                }, $Node->args))
+                            ),
                         ]
-                    ),
-                    new \PhpParser\Node\Expr\StaticCall(
-                        new \PhpParser\Node\Name("\\" . SoftMocks::CLASS),
-                        "callConstruct",
-                        [
-                            $this->nodeNameToArg($class),
-                            $this->nodeArgsToArray($Node->args),
-                        ]
-                    ),
-                    $Node
-                ),
+                    )
+                )
             ]
         );
 
