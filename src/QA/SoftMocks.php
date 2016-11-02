@@ -1016,6 +1016,12 @@ class SoftMocks
 
     private static function rewriteContents($orig_file, $target_file, $contents)
     {
+        // It's not a very beauty, but it works.
+        // Removes PHP 7.1 tokens after method definition.
+        // See example: https://regex101.com/r/YaXwlJ/2
+        $regexp = '/(\s+function\s+)([^\s\(]+)(\s*\([^\)]+\)\s*)(:\s*(\?{0,1})\s*([^\s]+))/isu';
+        $contents = preg_replace($regexp, '\1\2\3', $contents);
+        
         $traverser = new \PhpParser\NodeTraverser();
         $traverser->addVisitor(new SoftMocksTraverser($orig_file));
 
