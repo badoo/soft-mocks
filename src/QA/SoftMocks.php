@@ -152,8 +152,11 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     public function pStmt_Declare(\PhpParser\Node\Stmt\Declare_ $node)
     {
-        return 'declare (' . $this->pCommaSeparated($node->declares) . ') {'
-            . $this->pStmts($node->stmts) . '}';
+        $declare = 'declare (' . $this->pCommaSeparated($node->declares);
+        if (!$node->stmts) {
+            return $declare . ');';
+        }
+        return $declare . ') {' . $this->pStmts($node->stmts) . '}';
     }
 
     public function pStmt_If(\PhpParser\Node\Stmt\If_ $node)
