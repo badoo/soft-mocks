@@ -315,6 +315,8 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         foreach ($encapsList as $element) {
             if (is_string($element)) {
                 $return .= addcslashes($element, "\n\r\t\f\v$" . $quote . "\\");
+            } elseif ($element instanceof \PhpParser\Node\Scalar) {
+                $return .= addcslashes($element->value, "\n\r\t\f\v$" . $quote . "\\");
             } else {
                 $return .= '{' . trim($this->p($element)) . '}';
             }
