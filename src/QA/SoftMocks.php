@@ -323,6 +323,17 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
         return $return;
     }
+
+    protected function pComments(array $comments)
+    {
+        $comments = parent::pComments($comments);
+
+        if ($comments && "\n" !== substr($comments, -1, 0)) {
+            $comments .= "\n";
+        }
+
+        return $comments;
+    }
 }
 
 class SoftMocks
