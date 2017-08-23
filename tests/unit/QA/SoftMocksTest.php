@@ -271,6 +271,11 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     public function testAnonymous()
     {
+        if (version_compare(phpversion(), '7.0.0', '<')) {
+            static::markTestSkipped('PHP do not support anonymous classes');
+        }
+
+        require_once __DIR__ . '/AnonymousTestClass.php';
         static::assertEquals(1, AnonymousTestClass::SOMETHING);
         $test = new AnonymousTestClass();
         $obj = $test->doSomething();
