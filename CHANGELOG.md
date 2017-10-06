@@ -1,5 +1,11 @@
 # SoftMocks v1 Change Log
 
+## master
+
+There are next changes:
+
+- use path in project for cached files path.
+
 ## v1.3.0
 
 There are next changes:
