@@ -1,5 +1,5 @@
 diff --git a/phpunit b/phpunit
-index f288633..1ef2c30 100755
+index f288633..42eb6a3 100755
 --- a/phpunit
 +++ b/phpunit
 @@ -27,9 +27,10 @@ if (!ini_get('date.timezone')) {
@@ -23,7 +23,7 @@ index f288633..1ef2c30 100755
      fwrite(STDERR,
          'You need to set up the project dependencies using Composer:' . PHP_EOL . PHP_EOL .
          '    composer install' . PHP_EOL . PHP_EOL .
-@@ -47,6 +48,56 @@ if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
+@@ -47,6 +48,57 @@ if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
      die(1);
  }
  
@@ -65,6 +65,7 @@ index f288633..1ef2c30 100755
 +            '/vendor/phpunit/' => '/vendor/phpunit/',
 +            '/vendor/sebastian/diff/' => '/vendor/sebastian/diff/',
 +            '/vendor/nikic/php-parser/' => '/vendor/nikic/php-parser/',
++            '/vendor/symfony/polyfill' => '/vendor/symfony/polyfill',
 +        )
 +    );
 +    \Badoo\SoftMocks::init();

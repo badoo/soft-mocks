@@ -1,5 +1,11 @@
 # SoftMocks v1 Change Log
 
+## master
+
+There are next changes:
+
+- error "PHP Fatal error:  Class 'Symfony\Polyfill\Php70\Php70' not found" was fixed.
+
 ## v1.3.0
 
 There are next changes:

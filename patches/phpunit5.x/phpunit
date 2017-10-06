@@ -85,6 +85,7 @@ if ($softMocksPath) {
             '/vendor/phpunit/' => '/vendor/phpunit/',
             '/vendor/sebastian/diff/' => '/vendor/sebastian/diff/',
             '/vendor/nikic/php-parser/' => '/vendor/nikic/php-parser/',
+            '/vendor/symfony/polyfill' => '/vendor/symfony/polyfill',
         )
     );
     \Badoo\SoftMocks::init();
