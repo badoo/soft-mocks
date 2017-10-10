@@ -399,13 +399,18 @@ class SoftMocks
     private static $prepare_for_rewrite_callback;
     private static $lock_file_path = '/tmp/mocks/soft_mocks_rewrite.lock';
 
+    protected static function getEnvironment($key)
+    {
+        return \getenv($key);
+    }
+
     public static function init()
     {
         if (!defined('SOFTMOCKS_ROOT_PATH')) {
             define('SOFTMOCKS_ROOT_PATH', '/');
         }
 
-        if (!empty($_ENV['SOFT_MOCKS_DEBUG'])) {
+        if (!empty(static::getEnvironment('SOFT_MOCKS_DEBUG'))) {
             self::$debug = true;
         }
 
@@ -702,7 +707,7 @@ class SoftMocks
         }
         $trace_str = $str->getFile() . '(' . $str->getLine() . ")\n$trace_str";
 
-        if (!empty($_ENV['REAL_BACKTRACE'])) {
+        if (!empty(static::getEnvironment('REAL_BACKTRACE'))) {
             echo $trace_str;
             return;
         }
