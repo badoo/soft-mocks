@@ -1720,6 +1720,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
     private $filename;
 
     private $disable_const_rewrite_level = 0;
+    private $disable_func_call_inside_encapsed_rewrite_level = 0;
 
     private $in_interface = false;
     private $in_closure_level = 0;
@@ -2130,6 +2131,10 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
     public function rewriteExpr_FuncCall(\PhpParser\Node\Expr\FuncCall $Node)
     {
+        if ($this->disable_func_call_inside_encapsed_rewrite_level > 0) {
+            return null;
+        }
+
         $arg_is_ref = [];
 
         if ($Node->name instanceof \PhpParser\Node\Name) {
@@ -2205,5 +2210,15 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
         $NewNode->setLine($Node->getLine());
         return $NewNode;
+    }
+
+    public function beforeScalar_Encapsed()
+    {
+        $this->disable_func_call_inside_encapsed_rewrite_level++;
+    }
+
+    public function rewriteScalar_Encapsed()
+    {
+        $this->disable_func_call_inside_encapsed_rewrite_level--;
     }
 }
