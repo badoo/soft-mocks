@@ -343,7 +343,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 class SoftMocks
 {
     /** for create new files when parser version changed */
-    const PARSER_VERSION = '3.0.6';
+    const PARSER_VERSION = '^3.0.6';
     const MOCKS_CACHE_TOUCHTIME = 86400; // 1 day
 
     private static $rewrite_cache = [/* source => target */];
