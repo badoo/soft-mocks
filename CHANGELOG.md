@@ -4,7 +4,8 @@
 
 There are next changes:
 
-- using getenv instead of $_ENV global variable.
+- using getenv instead of $_ENV global variable;
+- fix strong dependence of nikic/php-parser;
 
 ## v1.3.2
 
