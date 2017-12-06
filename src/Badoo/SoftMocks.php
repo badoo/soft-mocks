@@ -471,6 +471,7 @@ class SoftMocks
 
     const LANG_CONSTRUCT_EXIT = 'exit';
 
+    private static $project_path;
     private static $rewrite_internal = false;
     private static $mocks_cache_path = "/tmp/mocks/";
     private static $ignore_sub_paths = [
@@ -634,6 +635,29 @@ class SoftMocks
 
         self::ignoreFiles(get_included_files());
         self::injectIntoPhpunit();
+        self::initProjectPath();
+    }
+
+    protected static function initProjectPath()
+    {
+        $lib_path = dirname(dirname(__DIR__));
+        $vendor_path = dirname(dirname($lib_path));
+        if (basename($vendor_path) === 'vendor') {
+            self::$project_path = dirname($vendor_path);
+            return;
+        }
+        self::$project_path = $lib_path;
+    }
+
+    public static function setProjectPath($project_path)
+    {
+        if (!empty($project_path)) {
+            self::$project_path = rtrim($project_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        }
+
+        if (!is_dir(self::$project_path)) {
+            throw new \RuntimeException("Project path isn't exists");
+        }
     }
 
     /**
@@ -931,8 +955,17 @@ class SoftMocks
             }
 
             $md5 = md5($clean_filepath . ':' . $md5_file);
+            if (self::$project_path && strpos($file, self::$project_path) === 0) {
+                $file_in_project = substr($file, strlen(self::$project_path));
+            } else {
+                $file_in_project = basename($file);
+            }
 
-            $target_file = self::$mocks_cache_path . self::getVersion() . DIRECTORY_SEPARATOR . mb_orig_substr($md5, 0, 2) . DIRECTORY_SEPARATOR . basename($file) . "_" . $md5 . ".php";
+            $target_file = self::$mocks_cache_path . self::getVersion() . DIRECTORY_SEPARATOR . $file_in_project . "_" . $md5 . ".php";
+            $target_dir = dirname($target_file);
+            if (!@mkdir($target_dir, 0777, true) && !is_dir($target_dir)) {
+                throw new \RuntimeException("Can't create {$target_dir}");
+            }
             if (!file_exists($target_file)) {
                 $old_umask = umask(0);
                 self::createRewrittenFile($file, $target_file);

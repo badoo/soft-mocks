@@ -5,7 +5,8 @@
 There are next changes:
 
 - using getenv instead of $_ENV global variable;
-- error "PHP Fatal error:  Class 'Symfony\Polyfill\Php70\Php70' not found" was fixed.
+- error "PHP Fatal error:  Class 'Symfony\Polyfill\Php70\Php70' not found" was fixed;
+- use path in project for cached files path.
 
 ## v1.3.2
 
