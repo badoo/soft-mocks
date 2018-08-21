@@ -2,16 +2,10 @@
 
 namespace Badoo;
 
-use Composer\XdebugHandler\XdebugHandler;
-
 class SoftMocksAccelerator
 {
     public static function warmup($file, $max_cores)
     {
-        $xdebug = new XdebugHandler('myapp');
-        $xdebug->check();
-        unset($xdebug);
-
         $old_files = get_included_files();
         require $file;
         $new_files = array_diff(get_included_files(), $old_files);

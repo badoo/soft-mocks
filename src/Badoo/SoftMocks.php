@@ -107,121 +107,11 @@ class SoftMocks
         self::$func_mocks['is_callable'] = [
             'args' => '$arg', 'code' => 'return \\' . self::class . '::isCallable($arg);',
         ];
-        self::$func_mocks['function_exists'] = [
-            'args' => '$arg', 'code' => 'return \\' . self::class . '::isCallable($arg);',
-        ];
         self::$func_mocks['constant'] = [
             'args' => '$constant', 'code' => 'return \\' . self::class . '::getConst("", $constant);',
         ];
         self::$func_mocks['defined'] = [
             'args' => '$constant', 'code' => 'return \\' . self::class . '::constDefined($constant);',
-        ];
-        self::$func_mocks['debug_backtrace'] = [
-            'args' => '',
-            'code' => function () {
-                $params = func_get_args();
-
-                $limit = 0;
-                $provide_object = true;
-                $ignore_args = false;
-
-                if (isset($params[0])) {
-                    if ($params[0] === false) {
-                        $provide_object = false;
-                    } else if ($params[0] === true) {
-                        $provide_object = true;
-                    } else {
-                        $provide_object = $params[0] & DEBUG_BACKTRACE_PROVIDE_OBJECT;
-                        $ignore_args = $params[0] & DEBUG_BACKTRACE_IGNORE_ARGS;
-                    }
-                }
-                if (isset($params[1])) {
-                    $limit = $params[1];
-                }
-
-                $result = debug_backtrace();
-
-                // remove our part of backtrace
-                while (count($result) > 0) {
-                    if (isset($result[0]['class']) && $result[0]['class'] === self::class
-                        && isset($result[0]['function']) && $result[0]['function'] === 'callFunction') {
-                        array_shift($result);
-                        break;
-                    }
-
-                    array_shift($result);
-                }
-
-                // remove calls that occur inside our file
-                $result = array_values(
-                    array_filter(
-                        $result,
-                        function ($el) { return !isset($el['file']) || $el['file'] !== __FILE__; }
-                    )
-                );
-
-                $unset_indices = [];
-
-                // replace paths
-                foreach ($result as $i => &$p) {
-                    if (isset($p["file"])) {
-                        $p["file"] = self::replaceFilename($p["file"], true);
-                        if ($p["file"] && $p["file"][0] !== '/') {
-                            $p["file"] = SOFTMOCKS_ROOT_PATH . $p['file'];
-                        }
-                    }
-
-                    if (isset($p['class']) && $p['class'] == self::class && isset($p['args'])) {
-                        $args = $p['args'];
-
-                        if ($p['function'] === 'callFunction') {
-                            unset($p['class']);
-                            unset($p['type']);
-                            $p['function'] = $args[1];
-                            $p['args'] = $args[2];
-                            $unset_indices[] = $i - 1; // reflection adds another line in trace that is not needed
-                        } else if ($p['function'] === 'callMethod') {
-                            $p['object'] = $args[0];
-                            $p['class'] = get_class($args[0]);
-                            $p['function'] = $args[1];
-                            $p['args'] = $args[2];
-                            $p['type'] = '->';
-                            $unset_indices[] = $i - 1; // reflection adds another line in trace that is not needed
-                        } else if ($p['function'] === 'callStaticMethod') {
-                            $p['class'] = $args[0];
-                            $p['function'] = $args[1];
-                            $p['args'] = $args[2];
-                            $p['type'] = '::';
-                            $unset_indices[] = $i - 1; // reflection adds another line in trace that is not needed
-                        }
-                    }
-
-                    if ($ignore_args) {
-                        unset($p['args']);
-                    }
-
-                    if (!$provide_object) {
-                        unset($p['object']);
-                    }
-                }
-
-                foreach ($unset_indices as $i) {
-                    unset($result[$i]);
-                }
-
-                $result = array_values($result);
-
-                if (!$limit) {
-                    return $result;
-                }
-
-                $limited_result = [];
-                for ($i = 0; $i < $limit; $i++) {
-                    $limited_result[] = $result[$i];
-                }
-
-                return $limited_result;
-            },
         ];
 
         self::$internal_func_mocks = [];
@@ -399,59 +289,10 @@ class SoftMocks
         echo "\n$descr: $errstr in " . self::replaceFilename($errfile) . " on line $errline\n";
     }
 
+    // printBackTrace is no longer needed, actually
     public static function printBackTrace($e = null)
     {
-        $str = $e ?: new \Exception();
-        if ($str instanceof \PHPUnit_Framework_ExceptionWrapper || $str instanceof \PHPUnit\Framework\ExceptionWrapper) {
-            $trace = [];
-            foreach ($str->getSerializableTrace() as $idx => $frame) {
-                $frame += ['file' => '', 'line' => '', 'class' => '', 'type' => '', 'function' => ''];
-                $trace[] = sprintf('#%d %s(%s): %s%s%s()', $idx, $frame['file'], $frame['line'], $frame['class'], $frame['type'], $frame['function']);
-            }
-            $trace_str = implode("\n", $trace);
-        } else {
-            $trace_str = $str->getTraceAsString();
-        }
-        $trace_str = $str->getFile() . '(' . $str->getLine() . ")\n$trace_str";
-
-        if (!empty(static::getEnvironment('REAL_BACKTRACE'))) {
-            echo $trace_str;
-            return;
-        }
-        $trace_lines = explode("\n", $trace_str);
-
-        foreach ($trace_lines as &$ln) {
-            $ln = preg_replace_callback(
-                '#(/[^:(]+)([:(])#',
-                function ($data) {
-                    return self::clearBasePath(self::replaceFilename($data[1], true) . $data[2]);
-                },
-                $ln
-            );
-
-            $ln = str_replace('[internal function]', '', $ln);
-            $ln = preg_replace('/^\\#\\d+\\s*\\:?\\s*/s', '', $ln);
-        }
-
-        echo "(use REAL_BACKTRACE=1 to get real trace) " . implode(
-            "\n ",
-            array_filter(
-                $trace_lines,
-                function ($str) {
-                    $parts = explode('(', trim($str), 2);
-                    if (count($parts) > 1) {
-                        $filename = $parts[0];
-                        if (mb_orig_stripos($filename, 'PHPUnit') !== false) {
-                            return false;
-                        }
-                    }
-
-                    return mb_orig_strpos($str, 'PHPUnit_Framework_ExpectationFailedException') === false
-                        && mb_orig_strpos($str, '{main}') === false
-                        && mb_orig_strpos($str, basename(__FILE__)) === false;
-                }
-            )
-        ) . "\n";
+        echo $e ?: new \Exception();
     }
 
     public static function replaceFilenameRaw($file)
@@ -540,10 +381,6 @@ class SoftMocks
             $clean_filepath = $file;
             if (strpos($clean_filepath, SOFTMOCKS_ROOT_PATH) === 0) {
                 $clean_filepath = substr($clean_filepath, strlen(SOFTMOCKS_ROOT_PATH));
-            }
-
-            if (self::$debug) {
-                self::debug("Clean filepath for $file is $clean_filepath");
             }
 
             $md5 = md5($clean_filepath . ':' . $md5_file);
@@ -856,7 +693,7 @@ class SoftMocks
             if (self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'] instanceof \Closure) {
                 $callable = self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'];
             } else {
-                $callable = eval("return function(" . self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['args'] . ") use(\$params) { " . self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'] . " };");
+                $callable = eval("return function(" . self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['args'] . ") use(\$params) { \$mm_func_args = \$params; " . self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'] . " };");
             }
             return call_user_func($callable, $code);
         }
@@ -873,7 +710,7 @@ class SoftMocks
                 if (self::$func_mocks[$ns_func]['code'] instanceof \Closure) {
                     $func_callable = self::$func_mocks[$ns_func]['code'];
                 } else {
-                    $func_callable = eval("return function(" . self::$func_mocks[$ns_func]['args'] . ") use (\$params) { " . self::$func_mocks[$ns_func]['code'] . " };");
+                    $func_callable = eval("return function(" . self::$func_mocks[$ns_func]['args'] . ") use (\$params) { \$mm_func_args = \$params; " . self::$func_mocks[$ns_func]['code'] . " };");
                 }
 
                 return call_user_func_array($func_callable, $params);
@@ -891,7 +728,7 @@ class SoftMocks
                 if (self::$func_mocks[$func]['code'] instanceof \Closure) {
                     $func_callable = self::$func_mocks[$func]['code'];
                 } else {
-                    $func_callable = eval("return function(" . self::$func_mocks[$func]['args'] . ") use (\$params) { " . self::$func_mocks[$func]['code'] . " };");
+                    $func_callable = eval("return function(" . self::$func_mocks[$func]['args'] . ") use (\$params) { \$mm_func_args = \$params; " . self::$func_mocks[$func]['code'] . " };");
                 }
                 return call_user_func_array($func_callable, $params);
             }
@@ -1024,6 +861,9 @@ class SoftMocks
         if (SoftMocksTraverser::isFunctionIgnored($func)) {
             throw new \RuntimeException("Function $func cannot be mocked using Soft Mocks");
         }
+        if (mb_orig_strpos($fakeCode, "func_get_args()") !== false) {
+            throw new \RuntimeException("func_get_args() will no longer work, please use \$mm_func_args variable instead");
+        }
         self::$func_mocks[$func] = ['args' => $functionArgs, 'code' => $fakeCode];
     }
 
@@ -1052,6 +892,7 @@ class SoftMocks
     {
         self::$mocks = [];
         self::$generator_mocks = [];
+        self::$generator_func_mocks = [];
         self::$func_mocks = self::$internal_func_mocks;
         self::$temp_disable = false;
         self::$lang_construct_mocks = [];
@@ -1144,14 +985,29 @@ class SoftMocks
         self::$generator_mocks[$class][$method] = $replacement;
     }
 
+    public static function redefineGeneratorFunction($func, callable $replacement)
+    {
+        self::$generator_func_mocks[$func] = $replacement;
+    }
+
     public static function restoreGenerator($class, $method)
     {
         unset(self::$generator_mocks[$class][$method]);
     }
 
+    public static function restoreGeneratorFunction($func)
+    {
+        unset(self::$generator_func_mocks[$func]);
+    }
+
     public static function isGeneratorMocked($class, $method)
     {
         return isset(self::$generator_mocks[$class][$method]);
+    }
+
+    public static function isGeneratorMockedFunction($func)
+    {
+        return isset(self::$generator_func_mocks[$func]);
     }
 
     public static function getMockForGenerator($class, $method)
@@ -1161,6 +1017,15 @@ class SoftMocks
         }
 
         return self::$generator_mocks[$class][$method];
+    }
+
+    public static function getMockForGeneratorFunction($func)
+    {
+        if (!isset(self::$generator_func_mocks[$func])) {
+            throw new \RuntimeException("Generator $func is not mocked");
+        }
+
+        return self::$generator_mocks[$func];
     }
 
     public static function redefineNew($class, callable $constructorFunc)
@@ -1319,7 +1184,15 @@ class SoftMocks
             return false;
         }
 
-        return isset(self::$func_mocks[$func]['code']) ? self::$func_mocks[$func]['code'] : false;
+        if (!isset(self::$func_mocks[$func]['code'])) {
+            return false;
+        }
+
+        if (self::$debug) {
+            self::debug("Func is mocked: $func");
+        }
+
+        return self::$func_mocks[$func]['code'];
     }
 
     public static function callOriginal($callable, $args, $class = null)

@@ -654,6 +654,9 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             return null; // user-defined functions are mocked using usual "if (...) { return eval(...); }"
         }
 
+        /*
+        // TODO: write SoftMocks::getFunction() first
+
         if ($this->parser_is_ok) {
             $Node->name = new \PhpParser\Node\Expr\StaticCall(
                 new \PhpParser\Node\Name("\\" . SoftMocks::class),
@@ -665,6 +668,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             );
             return $Node;
         }
+        */
 
         $NewNode = new \PhpParser\Node\Expr\StaticCall(
             new \PhpParser\Node\Name("\\" . SoftMocks::class),
