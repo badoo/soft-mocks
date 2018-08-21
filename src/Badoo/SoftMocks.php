@@ -8,421 +8,11 @@
 
 namespace Badoo;
 
-// Remove this when mb_overload is no longer available for usage in PHP
-if (!function_exists('mb_orig_substr')) {
-    function mb_orig_substr($str, $start, $length = null)
-    {
-        return is_null($length) ? substr($str, $start) : substr($str, $start, $length);
-    }
-
-    function mb_orig_stripos($haystack, $needle, $offset = 0)
-    {
-        return stripos($haystack, $needle, $offset);
-    }
-
-    function mb_orig_strpos($haystack, $needle, $offset = 0)
-    {
-        return strpos($haystack, $needle, $offset);
-    }
-
-    function mb_orig_strlen($string)
-    {
-        return strlen($string);
-    }
-}
-
-class SoftMocksFunctionCreator
-{
-    public function run($obj, $class, $params, $mocks)
-    {
-        if ($mocks['code'] instanceof \Closure) {
-            $new_func = $mocks['code'];
-        } else {
-            $code = "return function(" . $mocks['args'] . ") use (\$params) { " . $mocks['code'] . " };";
-            $func = eval($code);
-            $new_func = \Closure::bind($func, $obj, $class);
-        }
-
-        return call_user_func_array($new_func, $params);
-    }
-}
-
-class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
-{
-    private $cur_ln;
-
-    /**
-     * Pretty prints an array of nodes (statements) and indents them optionally.
-     *
-     * @param \PhpParser\Node[] $nodes  Array of nodes
-     * @param bool   $indent Whether to indent the printed nodes
-     *
-     * @return string Pretty printed statements
-     */
-    protected function pStmts(array $nodes, $indent = true)
-    {
-        $result = '';
-
-        foreach ($nodes as $node) {
-            $row = "";
-
-            $cur_ln = $this->cur_ln;
-
-            $comments = $node->getAttribute('comments', array());
-            $comments = !empty($comments) ? ($this->pComments($node->getAttribute('comments', array())) . "\n") : "";
-            $this->cur_ln += substr_count($comments, "\n");
-
-            if ($node->getLine() > $this->cur_ln) {
-                $row .= str_repeat("\n", $node->getLine() - $this->cur_ln);
-                $this->cur_ln += substr_count($row, "\n");
-            }
-
-            $row .= $comments
-                . $this->p($node)
-                . ($node instanceof \PhpParser\Node\Expr ? ';' : '');
-
-            $this->cur_ln = $cur_ln + substr_count($row, "\n"); // get rid of cur_ln modifications in deeper context
-
-            $result .= $row;
-        }
-
-        if ($indent) {
-            return preg_replace('~\n(?!$|' . $this->noIndentToken . ')~', "\n    ", $result);
-        } else {
-            return $result;
-        }
-    }
-
-    protected function pComments(array $comments)
-    {
-        $formattedComments = [];
-
-        foreach ($comments as $comment) {
-            $reformattedText = $comment->getReformattedText();
-            if (mb_orig_strpos($reformattedText, '/**') === 0) {
-                $formattedComments[] = $reformattedText;
-            }
-        }
-
-        return !empty($formattedComments) ? implode("\n", $formattedComments) : "";
-    }
-
-    protected function pCommaSeparatedMultiline(array $nodes, $trailingComma)
-    {
-        $result = '';
-        $lastIdx = count($nodes) - 1;
-        foreach ($nodes as $idx => $node) {
-            if ($node !== null) {
-                $comments = $node->getAttribute('comments', array());
-                if ($comments) {
-                    $result .= $this->pComments($comments);
-                }
-
-                $result .= "\n" . $this->p($node);
-            } else {
-                $result .= "\n";
-            }
-            if ($trailingComma || $idx !== $lastIdx) {
-                $result .= ',';
-            }
-        }
-
-        return preg_replace('~\n(?!$|' . $this->noIndentToken . ')~', "\n    ", $result);
-    }
-
-    public function prettyPrintFile(array $stmts)
-    {
-        $this->cur_ln = 1;
-        $this->preprocessNodes($stmts);
-        $result = $this->pStmts($stmts, false);
-        $result = $this->handleMagicTokens($result);
-        return "<?php " . $result;
-    }
-
-    protected function p(\PhpParser\Node $node)
-    {
-        return $this->{'p' . $node->getType()}($node);
-    }
-
-    protected function pExpr_Array(\PhpParser\Node\Expr\Array_ $node)
-    {
-        $is_short = $this->options['shortArraySyntax'] ? \PhpParser\Node\Expr\Array_::KIND_SHORT : \PhpParser\Node\Expr\Array_::KIND_LONG;
-        $syntax = $node->getAttribute(
-            'kind',
-            $is_short
-        );
-        if ($syntax === \PhpParser\Node\Expr\Array_::KIND_SHORT) {
-            $res = '[' . $this->pMaybeMultiline($node->items, true);
-            $suffix = ']';
-        } else {
-            $res = 'array(' . $this->pMaybeMultiline($node->items, true);
-            $suffix = ')';
-        }
-        $prefix = "";
-        if (!$this->areNodesSingleLine($node->items)) {
-            if ($node->getAttribute('endLine') - ($node->getLine() + substr_count($res, "\n")) >= 0) {
-                $prefix = str_repeat("\n", $node->getAttribute('endLine') - ($node->getLine() + substr_count($res, "\n")));
-            }
-        }
-        $res .= $prefix . $suffix;
-        return $res;
-    }
-
-    /**
-     * @param \PhpParser\NodeAbstract[] $nodes
-     * @return bool
-     */
-    protected function areNodesSingleLine(array $nodes)
-    {
-        if (empty($nodes)) {
-            return true;
-        }
-        $first_line = $nodes[0]->getAttribute('startLine');
-        $last_line = $nodes[sizeof($nodes) - 1]->getAttribute('endLine');
-        return $first_line === $last_line;
-    }
-
-    /**
-     * @param \PhpParser\NodeAbstract[] $nodes
-     * @param bool $trailingComma
-     * @return bool|string
-     */
-    protected function pMaybeMultiline(array $nodes, $trailingComma = false)
-    {
-        if ($this->areNodesSingleLine($nodes)) {
-            return $this->pCommaSeparated($nodes);
-        } else {
-            return $this->pCommaSeparatedMultiline($nodes, $trailingComma);
-        }
-    }
-
-    public function pExpr_Closure(\PhpParser\Node\Expr\Closure $node)
-    {
-        return ($node->static ? 'static ' : '')
-            . 'function ' . ($node->byRef ? '&' : '')
-            . '(' . $this->pCommaSeparated($node->params) . ')'
-            . (!empty($node->uses) ? ' use(' . $this->pCommaSeparated($node->uses) . ')' : '')
-            . (null !== $node->returnType ? ' : ' . $this->pType($node->returnType) : '')
-            . ' {' . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_Namespace(\PhpParser\Node\Stmt\Namespace_ $node)
-    {
-        if ($this->canUseSemicolonNamespaces) {
-            return 'namespace ' . $this->p($node->name) . ';' . $this->pStmts($node->stmts, false);
-        } else {
-            return 'namespace' . (null !== $node->name ? ' ' . $this->p($node->name) : '')
-                . ' {' . $this->pStmts($node->stmts) . '}';
-        }
-    }
-
-    public function pStmt_Interface(\PhpParser\Node\Stmt\Interface_ $node)
-    {
-        return 'interface ' . $node->name
-            . (!empty($node->extends) ? ' extends ' . $this->pCommaSeparated($node->extends) : '')
-            . '{' . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_Trait(\PhpParser\Node\Stmt\Trait_ $node)
-    {
-        return 'trait ' . $node->name
-            . '{' . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_TraitUse(\PhpParser\Node\Stmt\TraitUse $node)
-    {
-        return 'use ' . $this->pCommaSeparated($node->traits)
-            . (empty($node->adaptations) ? ';' : ' {' . $this->pStmts($node->adaptations) . '}');
-    }
-
-    public function pStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $node)
-    {
-        return $this->pModifiers($node->type)
-            . 'function ' . ($node->byRef ? '&' : '') . $node->name
-            . '(' . $this->pCommaSeparated($node->params) . ')'
-            . (null !== $node->returnType ? ' : ' . $this->pType($node->returnType) : '')
-            . (null !== $node->stmts ? '{' . $this->pStmts($node->stmts) . '}' : ';');
-    }
-
-    public function pStmt_Function(\PhpParser\Node\Stmt\Function_ $node)
-    {
-        return 'function ' . ($node->byRef ? '&' : '') . $node->name
-            . '(' . $this->pCommaSeparated($node->params) . ')'
-            . (null !== $node->returnType ? ' : ' . $this->pType($node->returnType) : '')
-            . '{' . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_If(\PhpParser\Node\Stmt\If_ $node)
-    {
-        return 'if (' . $this->p($node->cond) . ') {'
-            . $this->pStmts($node->stmts) . '}'
-            . $this->pImplode($node->elseifs)
-            . (null !== $node->else ? $this->p($node->else) : '');
-    }
-
-    public function pStmt_ElseIf(\PhpParser\Node\Stmt\ElseIf_ $node)
-    {
-        return ' elseif (' . $this->p($node->cond) . ') {'
-            . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_Else(\PhpParser\Node\Stmt\Else_ $node)
-    {
-        return ' else {' . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_For(\PhpParser\Node\Stmt\For_ $node)
-    {
-        return 'for ('
-            . $this->pCommaSeparated($node->init) . ';' . (!empty($node->cond) ? ' ' : '')
-            . $this->pCommaSeparated($node->cond) . ';' . (!empty($node->loop) ? ' ' : '')
-            . $this->pCommaSeparated($node->loop)
-            . ') {' . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_Foreach(\PhpParser\Node\Stmt\Foreach_ $node)
-    {
-        return 'foreach (' . $this->p($node->expr) . ' as '
-            . (null !== $node->keyVar ? $this->p($node->keyVar) . ' => ' : '')
-            . ($node->byRef ? '&' : '') . $this->p($node->valueVar) . ') {'
-            . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_While(\PhpParser\Node\Stmt\While_ $node)
-    {
-        return 'while (' . $this->p($node->cond) . ') {'
-            . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_Do(\PhpParser\Node\Stmt\Do_ $node)
-    {
-        return 'do {' . $this->pStmts($node->stmts)
-            . '} while (' . $this->p($node->cond) . ');';
-    }
-
-    public function pStmt_Switch(\PhpParser\Node\Stmt\Switch_ $node)
-    {
-        return 'switch (' . $this->p($node->cond) . ') {'
-            . $this->pStmts($node->cases) . '}';
-    }
-
-    public function pStmt_Case(\PhpParser\Node\Stmt\Case_ $node)
-    {
-        return (null !== $node->cond ? 'case ' . $this->p($node->cond) : 'default') . ':'
-            . $this->pStmts($node->stmts);
-    }
-
-    public function pStmt_TryCatch(\PhpParser\Node\Stmt\TryCatch $node)
-    {
-        return 'try {' . $this->pStmts($node->stmts) . '}'
-            . $this->pImplode($node->catches)
-            . ($node->finally !== null ? ' finally {' . $this->pStmts($node->finally->stmts) . '}' : '');
-    }
-
-    public function pStmt_Catch(\PhpParser\Node\Stmt\Catch_ $node)
-    {
-        return ' catch (' . $this->pImplode($node->types, ' | ') . ' $' . $node->var . ') {'
-            . $this->pStmts($node->stmts) . '}';
-    }
-
-    public function pStmt_Break(\PhpParser\Node\Stmt\Break_ $node)
-    {
-        return 'break' . ($node->num !== null ? ' ' . $this->p($node->num) : '') . ';';
-    }
-
-    public function pStmt_Continue(\PhpParser\Node\Stmt\Continue_ $node)
-    {
-        return 'continue' . ($node->num !== null ? ' ' . $this->p($node->num) : '') . ';';
-    }
-
-    public function pStmt_Return(\PhpParser\Node\Stmt\Return_ $node)
-    {
-        return 'return' . (null !== $node->expr ? ' ' . $this->p($node->expr) : '') . ';';
-    }
-
-    public function pStmt_Throw(\PhpParser\Node\Stmt\Throw_ $node)
-    {
-        return 'throw ' . $this->p($node->expr) . ';';
-    }
-
-    public function pStmt_Label(\PhpParser\Node\Stmt\Label $node)
-    {
-        return $node->name . ':';
-    }
-
-    public function pStmt_Goto(\PhpParser\Node\Stmt\Goto_ $node)
-    {
-        return 'goto ' . $node->name . ';';
-    }
-
-    // Other
-
-    public function pStmt_Echo(\PhpParser\Node\Stmt\Echo_ $node)
-    {
-        return 'echo ' . $this->pCommaSeparated($node->exprs) . ';';
-    }
-
-    public function pStmt_Static(\PhpParser\Node\Stmt\Static_ $node)
-    {
-        return 'static ' . $this->pCommaSeparated($node->vars) . ';';
-    }
-
-    public function pStmt_Global(\PhpParser\Node\Stmt\Global_ $node)
-    {
-        return 'global ' . $this->pCommaSeparated($node->vars) . ';';
-    }
-
-    public function pStmt_StaticVar(\PhpParser\Node\Stmt\StaticVar $node)
-    {
-        return '$' . $node->name
-            . (null !== $node->default ? ' = ' . $this->p($node->default) : '');
-    }
-
-    public function pStmt_Unset(\PhpParser\Node\Stmt\Unset_ $node)
-    {
-        return 'unset(' . $this->pCommaSeparated($node->vars) . ');';
-    }
-
-    public function pStmt_HaltCompiler(\PhpParser\Node\Stmt\HaltCompiler $node)
-    {
-        return '__halt_compiler();' . $node->remaining;
-    }
-
-    // Helpers
-
-    protected function pType($node)
-    {
-        return is_string($node) ? $node : $this->p($node);
-    }
-
-    protected function pClassCommon(\PhpParser\Node\Stmt\Class_ $node, $afterClassToken)
-    {
-        return $this->pModifiers($node->type)
-            . 'class' . $afterClassToken
-            . (null !== $node->extends ? ' extends ' . $this->p($node->extends) : '')
-            . (!empty($node->implements) ? ' implements ' . $this->pCommaSeparated($node->implements) : '')
-            . '{' . $this->pStmts($node->stmts) . '}';
-    }
-
-    protected function pEncapsList(array $encapsList, $quote)
-    {
-        $bak_line = $this->cur_ln;
-        $return = '';
-        foreach ($encapsList as $element) {
-            if ($element instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
-                $element = $element->value;
-            }
-            if (is_string($element)) {
-                $return .= addcslashes($element, "\n\r\t\f\v$" . $quote . "\\");
-            } else {
-                $return .= '{' . trim($this->p($element)) . '}';
-            }
-        }
-        $this->cur_ln = $bak_line + substr_count($return, "\n");
-
-        return $return;
-    }
-}
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/SoftMocksFunctionCreator.php';
+require_once __DIR__ . '/SoftMocksPrinter.php';
+require_once __DIR__ . '/SoftMocksTraverser.php';
+require_once __DIR__ . '/SoftMocksStream.php';
 
 class SoftMocks
 {
@@ -461,6 +51,7 @@ class SoftMocks
     private static $internal_func_mocks = []; // internal mocks that cannot be changed
 
     private static $generator_mocks = []; // mocks for generators
+    private static $generator_func_mocks = []; // mocks for generators
 
     private static $new_mocks = []; // mocks for "new" operator
     private static $lang_construct_mocks = [];
@@ -491,6 +82,12 @@ class SoftMocks
 
     public static function init()
     {
+        // SoftMocks wrapper is not going to work well with opcache
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+            register_shutdown_function('opcache_reset');
+        }
+
         if (!defined('SOFTMOCKS_ROOT_PATH')) {
             define('SOFTMOCKS_ROOT_PATH', '/');
         }
@@ -498,6 +95,8 @@ class SoftMocks
         if (!empty(static::getEnvironment('SOFT_MOCKS_DEBUG'))) {
             self::$debug = true;
         }
+
+        stream_wrapper_register("soft", SoftMocksStream::class);
 
         self::$func_mocks['call_user_func_array'] = [
             'args' => '', 'code' => 'return \\' . self::class . '::call($params[0], $params[1]);',
@@ -885,22 +484,25 @@ class SoftMocks
     private static function getVersion()
     {
         if (!isset(self::$version)) {
-            self::$version = phpversion() . self::PARSER_VERSION . md5_file(__FILE__);
+            $res = '';
+            $files = glob(__DIR__ . '/*.php');
+            sort($files);
+
+            foreach ($files as $file) {
+                $res .= md5_file($file);
+            }
+
+            self::$version = phpversion() . self::PARSER_VERSION . md5($res);
         }
         return self::$version;
     }
 
     public static function rewrite($file)
     {
-        try {
-            return self::doRewrite($file);
-        } catch (\Exception $e) {
-            echo "Could not rewrite file $file: " . $e->getMessage() . "\n";
-            return false;
-        }
+        return (self::$orig_paths[$file] = 'soft://' . $file);
     }
 
-    private static function doRewrite($file)
+    public static function doRewrite($file, &$opened_path = '')
     {
         if (self::$prepare_for_rewrite_callback !== null) {
             $callback = self::$prepare_for_rewrite_callback;
@@ -911,6 +513,8 @@ class SoftMocks
         if (!$file) {
             return $file;
         }
+
+        $opened_path = $file;
 
         if (!isset(self::$rewrite_cache[$file])) {
             if (mb_orig_strpos($file, self::$mocks_cache_path) === 0
@@ -1015,9 +619,9 @@ class SoftMocks
     private static function createRewrittenFile($file, $target_file)
     {
         if (self::$debug) {
-            echo "Rewriting $file => $target_file\n";
-            echo new \Exception();
-            ob_flush();
+            fwrite(STDOUT, "Rewriting $file => $target_file\n");
+            fwrite(STDOUT, new \Exception());
+            fwrite(STDOUT, "\n");
         }
 
         $contents = file_get_contents($file);
@@ -1707,6 +1311,14 @@ class SoftMocks
      */
     public static function isFuncMocked($func)
     {
+        if (self::$temp_disable) {
+            if (self::$debug) {
+                self::debug("Temporarily disabling mock check: $func");
+            }
+            self::$temp_disable = false;
+            return false;
+        }
+
         return isset(self::$func_mocks[$func]['code']) ? self::$func_mocks[$func]['code'] : false;
     }
 
@@ -1723,6 +1335,16 @@ class SoftMocks
             $method = $callable[1];
         } else if (is_scalar($callable) && mb_orig_strpos($callable, '::') !== false) {
             list($class, $method) = explode("::", $callable);
+        } else if (is_scalar($callable)) {
+            try {
+                $Rf = new \ReflectionFunction($callable);
+                if ($Rf->isUserDefined()) {
+                    self::$temp_disable = true; // we can only mock and check for mocks for user defined methods
+                }
+            } catch (\ReflectionException $e) {
+                // do nothing, it is ok in this case because it means that mock disabling is not needed
+            }
+            return call_user_func_array($callable, $args);
         } else {
             return call_user_func_array($callable, $args);
         }
@@ -1822,7 +1444,7 @@ class SoftMocks
 
     protected static function debug($message)
     {
-        echo $message . "\n";
+        fwrite(STDOUT, $message . "\n");
     }
 
     public static function injectIntoPhpunit()
@@ -1854,603 +1476,5 @@ class SoftMocks
                 return ob_get_clean();
             }
         );
-    }
-}
-
-class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
-{
-    private static $ignore_functions = [
-        "get_called_class" => true,
-        "get_parent_class" => true,
-        "get_class" => true,
-        "extract" => true,
-        "func_get_args" => true,
-        "func_get_arg" => true,
-        "func_num_args" => true,
-        "parse_str" => true,
-        "usort" => true,
-        "uasort" => true,
-        "uksort" => true,
-        "array_walk_recursive" => true,
-        "array_filter" => true,
-        "compact" => true,
-        "strtolower" => true,
-        "strtoupper" => true,
-        "get_object_vars" => true,
-    ];
-
-    private static $ignore_classes = [
-        \ReflectionClass::class => true,
-        \ReflectionMethod::class => true,
-    ];
-
-    private static $ignore_constants = [
-        'false' => true,
-        'true'  => true,
-        'null'  => true,
-    ];
-
-    public static function isFunctionIgnored($func)
-    {
-        return isset(self::$ignore_functions[$func]);
-    }
-
-    public static function isClassIgnored($class)
-    {
-        return isset(self::$ignore_classes[$class]);
-    }
-
-    public static function isConstIgnored($const)
-    {
-        return isset(self::$ignore_constants[$const]);
-    }
-
-    public static function ignoreClass($class)
-    {
-        self::$ignore_classes[$class] = true;
-    }
-
-    public static function ignoreConstant($constant)
-    {
-        self::$ignore_constants[$constant] = true;
-    }
-
-    public static function ignoreFunction($function)
-    {
-        self::$ignore_functions[$function] = true;
-    }
-
-    private $filename;
-
-    private $disable_const_rewrite_level = 0;
-    private $disable_func_call_inside_encapsed_rewrite_level = 0;
-
-    private $in_interface = false;
-    private $in_closure_level = 0;
-    private $has_yield = false;
-    private $cur_class = '';
-
-    public function __construct($filename)
-    {
-        $this->filename = realpath($filename);
-        if (strpos($this->filename, SOFTMOCKS_ROOT_PATH) === 0) {
-            $this->filename = substr($this->filename, strlen(SOFTMOCKS_ROOT_PATH));
-        }
-    }
-
-    private static function getNamespaceArg()
-    {
-        return new \PhpParser\Node\Arg(
-            new \PhpParser\Node\Expr\ConstFetch(
-                new \PhpParser\Node\Name('__NAMESPACE__')
-            )
-        );
-    }
-
-    public function enterNode(\PhpParser\Node $Node)
-    {
-        $callback = [$this, 'before' . ucfirst($Node->getType())];
-        if (is_callable($callback)) {
-            return call_user_func_array($callback, [$Node]);
-        }
-        return null;
-    }
-
-    public function leaveNode(\PhpParser\Node $Node)
-    {
-        $callback = [$this, 'rewrite' . ucfirst($Node->getType())];
-        if (is_callable($callback)) {
-            return call_user_func_array($callback, [$Node]);
-        }
-        return null;
-    }
-
-    // Cannot rewrite constants that are used as default values in function arguments
-    public function beforeParam()
-    {
-        $this->disable_const_rewrite_level++;
-    }
-
-    public function rewriteParam()
-    {
-        $this->disable_const_rewrite_level--;
-    }
-
-    // Cannot rewrite constants that are used as default values in constant declarations
-    public function beforeConst()
-    {
-        $this->disable_const_rewrite_level++;
-    }
-
-    public function rewriteConst()
-    {
-        $this->disable_const_rewrite_level--;
-    }
-
-    // Cannot rewrite constants that are used as default values in property declarations
-    public function beforeStmt_PropertyProperty()
-    {
-        $this->disable_const_rewrite_level++;
-    }
-
-    public function rewriteStmt_PropertyProperty()
-    {
-        $this->disable_const_rewrite_level--;
-    }
-
-    // Cannot rewrite constants that are used as default values in static variable declarations
-    public function beforeStmt_StaticVar()
-    {
-        $this->disable_const_rewrite_level++;
-    }
-
-    public function rewriteStmt_StaticVar()
-    {
-        $this->disable_const_rewrite_level--;
-    }
-
-    public function beforeStmt_Interface(\PhpParser\Node\Stmt\Interface_ $Node)
-    {
-        $this->cur_class = $Node->name;
-        $this->in_interface = true;
-    }
-
-    public function rewriteStmt_Interface()
-    {
-        $this->cur_class = false;
-        $this->in_interface = false;
-    }
-
-    public function rewriteScalar_MagicConst_Dir()
-    {
-        $String = new \PhpParser\Node\Scalar\String_(dirname($this->filename));
-        if ($this->filename[0] === '/') { // absolute path
-            return $String;
-        }
-
-        return new \PhpParser\Node\Expr\BinaryOp\Concat(
-            new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('SOFTMOCKS_ROOT_PATH')),
-            $String
-        );
-    }
-
-    public function rewriteScalar_MagicConst_File()
-    {
-        $String = new \PhpParser\Node\Scalar\String_($this->filename);
-        if ($this->filename[0] === '/') { // absolute path
-            return $String;
-        }
-
-        return new \PhpParser\Node\Expr\BinaryOp\Concat(
-            new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('SOFTMOCKS_ROOT_PATH')),
-            $String
-        );
-    }
-
-    public function rewriteExpr_Include(\PhpParser\Node\Expr\Include_ $Node)
-    {
-        $Node->expr = new \PhpParser\Node\Expr\StaticCall(
-            new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            "rewrite",
-            [new \PhpParser\Node\Arg($Node->expr)]
-        );
-    }
-
-    public function rewriteExpr_Exit(\PhpParser\Node\Expr\Exit_ $Node)
-    {
-        $args = [];
-        if ($Node->expr !== null) {
-            $args[] = new \PhpParser\Node\Arg($Node->expr);
-        }
-
-        $NewNode = new \PhpParser\Node\Expr\StaticCall(
-            new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            "callExit",
-            $args
-        );
-        $NewNode->setLine($Node->getLine());
-
-        return $NewNode;
-    }
-
-    public function beforeStmt_ClassMethod()
-    {
-        $this->in_closure_level = 0;
-        $this->has_yield = false;
-    }
-
-    public function beforeExpr_Closure()
-    {
-        $this->in_closure_level++;
-    }
-
-    public function rewriteExpr_Closure(\PhpParser\Node\Expr\Closure $Node)
-    {
-        $this->in_closure_level--;
-        return $Node;
-    }
-
-    public function beforeExpr_Yield()
-    {
-        if ($this->in_closure_level === 0) {
-            $this->has_yield = true;
-        }
-    }
-
-    public function beforeExpr_YieldFrom()
-    {
-        if ($this->in_closure_level === 0) {
-            $this->has_yield = true;
-        }
-    }
-
-    public function beforeStmt_Class(\PhpParser\Node\Stmt\Class_ $Node)
-    {
-        $this->cur_class = $Node->name;
-    }
-
-    public function rewriteStmt_Class()
-    {
-        $this->cur_class = null;
-    }
-
-    public function beforeStmt_Trait(\PhpParser\Node\Stmt\Trait_ $Node)
-    {
-        $this->cur_class = $Node->name;
-    }
-
-    public function rewriteStmt_Trait()
-    {
-        $this->cur_class = null;
-    }
-
-    public function rewriteStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $Node)
-    {
-        if ($this->in_interface) {
-            return null;
-        }
-
-        // if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked("self"::class, static::class, __FUNCTION__))) {
-        //     $params = [/* variables with references to them */];
-        //     $mm_func_args = func_get_args();
-        //     $variadic_params_idx = '' || '<idx_of variadic_params>'
-        //     return eval($__softmocksvariableforcode);
-        // }/** @codeCoverageIgnore */
-        $static = new \PhpParser\Node\Arg(
-            new \PhpParser\Node\Expr\ClassConstFetch(
-                new \PhpParser\Node\Name("static"),
-                "class"
-            )
-        );
-
-        $function = new \PhpParser\Node\Expr\ConstFetch(
-            new \PhpParser\Node\Name("__FUNCTION__")
-        );
-
-        $params_arr = [];
-        $variadic_params_idx = null;
-        $last_param_idx = sizeof($Node->params) - 1;
-        if ($last_param_idx >= 0 && $Node->params[$last_param_idx]->variadic) {
-            $variadic_params_idx = $last_param_idx;
-        }
-        foreach ($Node->params as $Par) {
-            $params_arr[] = new \PhpParser\Node\Expr\ArrayItem(
-                new \PhpParser\Node\Expr\Variable($Par->name),
-                null,
-                $Par->byRef
-            );
-        }
-
-        $body_stmts = [
-            new \PhpParser\Node\Expr\Assign(
-                new \PhpParser\Node\Expr\Variable("mm_func_args"),
-                new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name("func_get_args"))
-            ),
-            new \PhpParser\Node\Expr\Assign(
-                new \PhpParser\Node\Expr\Variable("params"),
-                new \PhpParser\Node\Expr\Array_($params_arr)
-            ),
-            new \PhpParser\Node\Expr\Assign(
-                new \PhpParser\Node\Expr\Variable("variadic_params_idx"),
-                new \PhpParser\Node\Scalar\String_($variadic_params_idx)
-            ),
-        ];
-
-        // generators cannot return values,
-        // we need special code handling them because yield cannot be used inside eval
-        // we get something like the following:
-        //
-        //     $mm_callback = SoftMocks::getMockForGenerator();
-        //     foreach ($mm_callback(...) as $mm_val) { yield $mm_val; }
-        //
-        // also functions with void return type declarations cannot return values
-        if ($this->has_yield) {
-            $args = [$static, $function];
-
-            $body_stmts[] = new \PhpParser\Node\Expr\Assign(
-                new \PhpParser\Node\Expr\Variable("mm_callback"),
-                new \PhpParser\Node\Expr\StaticCall(
-                    new \PhpParser\Node\Name("\\" . SoftMocks::class),
-                    "getMockForGenerator",
-                    $args
-                )
-            );
-
-            $func_call_args = [];
-            foreach ($Node->params as $Par) {
-                $func_call_args[] = new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\Variable($Par->name));
-            }
-
-            $val = new \PhpParser\Node\Expr\Variable("mm_val");
-
-            $body_stmts[] = new \PhpParser\Node\Stmt\Foreach_(
-                new \PhpParser\Node\Expr\FuncCall(
-                    new \PhpParser\Node\Expr\Variable("mm_callback"),
-                    $func_call_args
-                ),
-                $val,
-                [
-                    'byRef' => $Node->byRef,
-                    'stmts' => [new \PhpParser\Node\Expr\Yield_($val)],
-                ]
-            );
-
-            $body_stmts[] = new \PhpParser\Node\Stmt\Return_();
-        } else {
-            $args = [
-                new \PhpParser\Node\Arg(
-                    new \PhpParser\Node\Expr\ClassConstFetch(
-                        new \PhpParser\Node\Name($this->cur_class ?: 'self'),
-                        "class"
-                    )
-                ),
-                $static,
-                $function,
-            ];
-
-            $eval = new \PhpParser\Node\Expr\Eval_(
-                new \PhpParser\Node\Expr\Variable("__softmocksvariableforcode")
-            );
-
-            if ($Node->returnType === 'void') {
-                $body_stmts[] = $eval;
-                $body_stmts[] = new \PhpParser\Node\Stmt\Return_();
-            } else {
-                $body_stmts[] = new \PhpParser\Node\Stmt\Return_($eval);
-            }
-        }
-        $body_stmts[] = new \PhpParser\Node\Name("/** @codeCoverageIgnore */");
-
-        $MockCheck = new \PhpParser\Node\Stmt\If_(
-            new \PhpParser\Node\Expr\BinaryOp\NotIdentical(
-                new \PhpParser\Node\Expr\ConstFetch(
-                    new \PhpParser\Node\Name("false")
-                ),
-                new \PhpParser\Node\Expr\Assign(
-                    new \PhpParser\Node\Expr\Variable("__softmocksvariableforcode"),
-                    new \PhpParser\Node\Expr\StaticCall(
-                        new \PhpParser\Node\Name("\\" . SoftMocks::class),
-                        $this->has_yield ? "isGeneratorMocked" : "isMocked",
-                        $args
-                    )
-                )
-            ),
-            [
-                'stmts' => $body_stmts,
-            ]
-        );
-
-        if (is_array($Node->stmts)) {
-            array_unshift($Node->stmts, $MockCheck);
-        } else if (!$Node->isAbstract()) {
-            $Node->stmts = [$MockCheck];
-        }
-    }
-
-    private static $can_ref = [
-        'Expr_Variable' => true,
-        'Expr_PropertyFetch' => true,
-        'Expr_StaticPropertyFetch' => true,
-    ];
-
-    /**
-     * Determines whether or not a parameter can be reference (e.g. vars can be referenced, while function calls cannot)
-     *
-     * @param \PhpParser\Node\Expr $value
-     * @return bool
-     */
-    private static function canRef($value)
-    {
-        $type = $value->getType();
-        if (isset(self::$can_ref[$type])) {
-            return true;
-        } else if ($value instanceof \PhpParser\Node\Expr\ArrayDimFetch) {
-            if (!self::canRef($value->var)) {
-                return false;
-            }
-
-            // an ugly hack for ArrayAccess objects that are used as "$this['something']"
-            if ($value->var instanceof \PhpParser\Node\Expr\Variable && $value->var->name == 'this') {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @param \PhpParser\Node\Arg[] $node_args
-     * @param array $arg_is_ref    array(arg_idx => bool)   whether or not the specified argument accepts reference
-     * @return \PhpParser\Node\Expr\Array_|\PhpParser\Node\Expr\FuncCall
-     */
-    private static function nodeArgsToArray($node_args, $arg_is_ref = [])
-    {
-        $arr_args = [];
-        $i = 0;
-
-        foreach ($node_args as $arg) {
-            /** @var \PhpParser\Node\Expr\ArrayItem $arg */
-            $is_ref = false;
-
-            if (isset($arg_is_ref[$i]) && !$arg_is_ref[$i]) {
-                $is_ref = false;
-            } else if (self::canRef($arg->value)) {
-                $is_ref = true;
-            }
-
-            if ($arg->unpack) {
-                if ($i !== count($node_args) - 1) {
-                    throw new \InvalidArgumentException("Unpackable argument '" . var_export($arg, true) . "' should be last");
-                }
-                $unpacked_arg = clone $arg;
-                $unpacked_arg->unpack = false;
-                return new \PhpParser\Node\Expr\FuncCall(
-                    new \PhpParser\Node\Name(['', 'array_merge']),
-                    [new \PhpParser\Node\Expr\Array_($arr_args), $unpacked_arg]
-                );
-            }
-            $arr_args[] = new \PhpParser\Node\Expr\ArrayItem(
-                $arg->value,
-                null,
-                $is_ref
-            );
-
-            $i++;
-        }
-
-        return new \PhpParser\Node\Expr\Array_($arr_args);
-    }
-
-    private static function nodeNameToArg($name)
-    {
-        if (is_scalar($name)) {
-            $name = new \PhpParser\Node\Scalar\String_($name);
-        } else if ($name instanceof \PhpParser\Node\Name) {
-            return new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\ClassConstFetch($name, 'class'));
-        }
-
-        return new \PhpParser\Node\Arg($name);
-    }
-
-    public function rewriteExpr_FuncCall(\PhpParser\Node\Expr\FuncCall $Node)
-    {
-        if ($this->disable_func_call_inside_encapsed_rewrite_level > 0) {
-            return null;
-        }
-
-        $arg_is_ref = [];
-
-        if ($Node->name instanceof \PhpParser\Node\Name) {
-            $str = $Node->name->toString();
-            if (isset(self::$ignore_functions[$str])) {
-                return null;
-            }
-
-            if (isset(SoftMocks::$internal_functions[$str])) {
-                foreach ((new \ReflectionFunction($str))->getParameters() as $Param) {
-                    $arg_is_ref[] = $Param->isPassedByReference();
-                }
-            }
-
-            $name = new \PhpParser\Node\Scalar\String_($str);
-        } else { // Expr
-            $name = $Node->name;
-        }
-
-        $NewNode = new \PhpParser\Node\Expr\StaticCall(
-            new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            "callFunction",
-            [
-                self::getNamespaceArg(),
-                $name,
-                self::nodeArgsToArray($Node->args, $arg_is_ref),
-            ]
-        );
-        $NewNode->setLine($Node->getLine());
-
-        return $NewNode;
-    }
-
-    public function rewriteExpr_ConstFetch(\PhpParser\Node\Expr\ConstFetch $Node)
-    {
-        if ($this->disable_const_rewrite_level > 0) {
-            return null;
-        }
-
-        $name = $Node->name->toString();
-
-        if (isset(self::$ignore_constants[strtolower($name)])) {
-            return null;
-        }
-
-        $NewNode = new \PhpParser\Node\Expr\StaticCall(
-            new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            "getConst",
-            [
-                self::getNamespaceArg(),
-                self::nodeNameToArg($name),
-            ]
-        );
-
-        $NewNode->setLine($Node->getLine());
-        return $NewNode;
-    }
-
-    public function rewriteExpr_ClassConstFetch(\PhpParser\Node\Expr\ClassConstFetch $Node)
-    {
-        if ($this->disable_const_rewrite_level > 0 || strtolower($Node->name) == 'class') {
-            return null;
-        }
-
-        $params = [
-            self::nodeNameToArg($Node->class),
-            self::nodeNameToArg($Node->name),
-        ];
-        if ($this->cur_class) {
-            $params[] = new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\ClassConstFetch(new \PhpParser\Node\Name('self'), 'class'));
-        } else {
-            $params[] = new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('null')));
-        }
-
-        $NewNode = new \PhpParser\Node\Expr\StaticCall(
-            new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            "getClassConst",
-            $params
-        );
-
-        $NewNode->setLine($Node->getLine());
-        return $NewNode;
-    }
-
-    public function beforeScalar_Encapsed()
-    {
-        $this->disable_func_call_inside_encapsed_rewrite_level++;
-    }
-
-    public function rewriteScalar_Encapsed()
-    {
-        $this->disable_func_call_inside_encapsed_rewrite_level--;
     }
 }
