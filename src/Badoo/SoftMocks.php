@@ -707,11 +707,7 @@ class SoftMocks
                 if (self::$debug) {
                     self::debug("Intercepting call to $ns_func");
                 }
-                if (self::$func_mocks[$ns_func]['code'] instanceof \Closure) {
-                    $func_callable = self::$func_mocks[$ns_func]['code'];
-                } else {
-                    $func_callable = eval("return function(" . self::$func_mocks[$ns_func]['args'] . ") use (\$params) { \$mm_func_args = \$params; " . self::$func_mocks[$ns_func]['code'] . " };");
-                }
+                $func_callable = eval("return function(" . self::$func_mocks[$ns_func]['args'] . ") use (\$params) { \$mm_func_args = \$params; " . self::$func_mocks[$ns_func]['code'] . " };");
 
                 return call_user_func_array($func_callable, $params);
             }
@@ -861,8 +857,8 @@ class SoftMocks
         if (SoftMocksTraverser::isFunctionIgnored($func)) {
             throw new \RuntimeException("Function $func cannot be mocked using Soft Mocks");
         }
-        if (mb_orig_strpos($fakeCode, "func_get_args()") !== false) {
-            throw new \RuntimeException("func_get_args() will no longer work, please use \$mm_func_args variable instead");
+        if (!is_scalar($fakeCode)) {
+            throw new \RuntimeException("Only code in text form can be supplied");
         }
         self::$func_mocks[$func] = ['args' => $functionArgs, 'code' => $fakeCode];
     }
@@ -1192,7 +1188,7 @@ class SoftMocks
             self::debug("Func is mocked: $func");
         }
 
-        return self::$func_mocks[$func]['code'];
+        return "\$__softmocks_cb = function(" . self::$func_mocks[$func]['args'] . ") use (\$params) { \$mm_func_args = \$params; " . self::$func_mocks[$func]['code'] . "; }; return call_user_func_array(\$__softmocks_cb, \$mm_func_args);";
     }
 
     public static function callOriginal($callable, $args, $class = null)
