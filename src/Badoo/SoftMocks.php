@@ -96,8 +96,6 @@ class SoftMocks
             self::$debug = true;
         }
 
-        stream_wrapper_register("soft", SoftMocksStream::class);
-
         self::$func_mocks['call_user_func_array'] = [
             'args' => '', 'code' => 'return \\' . self::class . '::call($params[0], $params[1]);',
         ];
@@ -340,7 +338,9 @@ class SoftMocks
 
     public static function rewrite($file)
     {
-        return (self::$orig_paths[$file] = 'soft://' . $file);
+        stream_wrapper_unregister("file");
+        stream_register_wrapper("file", SoftMocksStream::class);
+        return $file;
     }
 
     public static function doRewrite($file, &$opened_path = '')
