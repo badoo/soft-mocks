@@ -5,6 +5,32 @@ class SoftMocksStream
 {
     public $context;
     private $fp;
+    private $dh;
+
+    public function dir_opendir($path, $options)
+    {
+        stream_wrapper_restore("file");
+        $this->dh = opendir($path);
+        stream_wrapper_unregister("file");
+        stream_wrapper_register("file", self::class);
+
+        return $this->dh !== false;
+    }
+
+    public function dir_readdir()
+    {
+        return readdir($this->dh);
+    }
+
+    public function dir_rewinddir()
+    {
+        return rewinddir($this->dh);
+    }
+
+    public function dir_closedir()
+    {
+        return closedir($this->dh);
+    }
 
     public function stream_close()
     {
@@ -16,6 +42,16 @@ class SoftMocksStream
         return feof($this->fp);
     }
 
+    public function stream_cast($cast_as) {
+        if ($this->fp) {
+            return $this->fp;
+        }
+        if ($this->dh) {
+            return $this->dh;
+        }
+        return false;
+    }
+
     public function stream_open($path, $mode, $options, &$opened_path)
     {
         // magic
@@ -23,6 +59,12 @@ class SoftMocksStream
 
         if (mb_orig_strpos($path, "soft://") === 0) {
             $path = mb_orig_substr($path, mb_orig_strlen("soft://"));
+        }
+
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        if ($ext !== 'php' && $ext !== 'inc' && $ext !== 'phtml' && $ext !== 'php5') {
+            $this->fp = fopen($path, $mode);
+            return $this->fp !== false;
         }
 
         try {
