@@ -5,6 +5,7 @@ class SoftMocksStream
 {
     public $context;
     private $fp;
+    private $filename;
 
     public function stream_close()
     {
@@ -18,8 +19,7 @@ class SoftMocksStream
 
     public function stream_open($path, $mode, $options, &$opened_path)
     {
-        // magic
-        stream_wrapper_restore("file");
+        $this->filename = $path;
 
         if (mb_orig_strpos($path, "soft://") === 0) {
             $path = mb_orig_substr($path, mb_orig_strlen("soft://"));
@@ -63,11 +63,6 @@ class SoftMocksStream
 
     public function url_stat($path, $flags)
     {
-        stream_wrapper_restore("file");
-        // not the best solution, but $flags does not always specify that we do not need errors
-        $res = @stat($path);
-        stream_wrapper_unregister("file");
-        stream_wrapper_register("file", self::class);
-        return $res;
+        return stat($path, $flags);
     }
 }
