@@ -323,3 +323,30 @@ class ClassWithCallViaVariable
         return $a();
     }
 }
+
+class ClassToTestPauseResume
+{
+    const A = 1;
+    // const B = 2;
+    const C = 3;
+    
+    public function method()
+    {
+        return 1;
+    }
+    
+    public function generator()
+    {
+        yield "a";
+    }
+    
+    public function exit()
+    {
+        exit(1);
+    }
+}
+
+function functionToTestPauseResume()
+{
+    return 1;
+}

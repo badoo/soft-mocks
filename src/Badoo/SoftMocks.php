@@ -454,6 +454,18 @@ class SoftMocks
     private static $constant_mocks = [];
     private static $removed_constants = [];
 
+    // variables for pause/resume feature
+    private static $paused_mocks = [];
+    private static $paused_generator_mocks = [];
+    private static $paused_func_mocks = [];
+    private static $paused_lang_construct_mocks = [];
+    private static $paused_constant_mocks = [];
+    private static $paused_removed_constants = [];
+    private static $paused_new_mocks = [];
+    private static $paused_temp_disable = false;
+    // flag indicates that SoftMocks are on pause
+    private static $paused = false;
+
     private static $debug = false;
 
     private static $temp_disable = false;
@@ -1694,13 +1706,71 @@ class SoftMocks
 
     public static function restoreAll()
     {
+        self::restoreAllActual();
+        self::restoreAllPaused();
+    }
+    
+    private static function restoreAllActual()
+    {
         self::$mocks = [];
         self::$generator_mocks = [];
         self::$func_mocks = self::$internal_func_mocks;
         self::$temp_disable = false;
         self::$lang_construct_mocks = [];
-        self::restoreAllConstants();
-        self::restoreAllNew();
+        self::restoreAllConstantsActual();
+        self::restoreAllNewActual();
+    }
+    
+    private static function restoreAllPaused()
+    {
+        self::$paused_mocks = [];
+        self::$paused_generator_mocks = [];
+        self::$paused_func_mocks = [];
+        self::$paused_temp_disable = false;
+        self::$paused_lang_construct_mocks = [];
+        self::restoreAllConstantsPaused();
+        self::restoreAllNewPaused();
+    }
+
+    /**
+     * pause all SoftMocks
+     */
+    public static function pause()
+    {
+        if (self::$paused === false) {
+            self::$paused_mocks = self::$mocks;
+            self::$paused_generator_mocks = self::$generator_mocks;
+            self::$paused_func_mocks = self::$func_mocks;
+            self::$paused_temp_disable = self::$temp_disable;
+            self::$paused_lang_construct_mocks = self::$lang_construct_mocks;
+            self::$paused_constant_mocks = self::$constant_mocks;
+            self::$paused_removed_constants = self::$removed_constants;
+            self::$paused_new_mocks = self::$new_mocks;
+            self::restoreAllActual();
+
+            self::$paused = true;
+        }
+    }
+
+    /**
+     * revert pause function
+     * @see SoftMocks::pause()
+     */
+    public static function resume()
+    {
+        if (self::$paused === true) {
+            self::$mocks = self::$paused_mocks;
+            self::$generator_mocks = self::$paused_generator_mocks;
+            self::$func_mocks = self::$paused_func_mocks;
+            self::$temp_disable = self::$paused_temp_disable;
+            self::$lang_construct_mocks = self::$paused_lang_construct_mocks;
+            self::$constant_mocks = self::$paused_constant_mocks;
+            self::$removed_constants = self::$paused_removed_constants;
+            self::$new_mocks = self::$paused_new_mocks;
+            self::restoreAllPaused();
+
+            self::$paused = false;
+        }
     }
 
     /**
@@ -1819,7 +1889,18 @@ class SoftMocks
 
     public static function restoreAllNew()
     {
+        self::restoreAllNewActual();
+        self::restoreAllNewPaused();
+    }
+
+    private static function restoreAllNewActual()
+    {
         self::$new_mocks = [];
+    }
+
+    private static function restoreAllNewPaused()
+    {
+        self::$paused_new_mocks = [];
     }
 
     public static function redefineConstant($constantName, $value)
@@ -1844,8 +1925,20 @@ class SoftMocks
 
     public static function restoreAllConstants()
     {
+        self::restoreAllConstantsActual();
+        self::restoreAllConstantsPaused();
+    }
+    
+    private static function restoreAllConstantsActual()
+    {
         self::$constant_mocks = [];
         self::$removed_constants = [];
+    }
+    
+    private static function restoreAllConstantsPaused()
+    {
+        self::$paused_constant_mocks = [];
+        self::$paused_removed_constants = [];
     }
 
     public static function removeConstant($constantName)

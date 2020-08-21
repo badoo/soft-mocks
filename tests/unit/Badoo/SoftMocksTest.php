@@ -2845,4 +2845,89 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
         \Badoo\SoftMocks::rewrite($filename);
     }
+
+    public function testPauseResumeConstants()
+    {
+        $old_result_A = 1;
+        $new_result_A = 2;
+        $new_result_B = 2;
+        $old_result_C = 3;
+        // do redefines / delete some constants
+        \Badoo\SoftMocks::redefineConstant(ClassToTestPauseResume::class . '::A', $new_result_A);
+        \Badoo\SoftMocks::redefineConstant(ClassToTestPauseResume::class . '::B', $new_result_B);
+        \Badoo\SoftMocks::removeConstant(ClassToTestPauseResume::class . '::C');
+        // pause environment
+        \Badoo\SoftMocks::pause();
+
+        $this->assertEquals($old_result_A, ClassToTestPauseResume::A);
+        $this->assertTrue(!defined(ClassToTestPauseResume::class . '::B'));
+        $this->assertTrue(defined(ClassToTestPauseResume::class . '::C'));
+        $this->assertEquals($old_result_C, ClassToTestPauseResume::C);
+        // resume environment
+        \Badoo\SoftMocks::resume();
+
+        $this->assertEquals($new_result_A, ClassToTestPauseResume::A);
+        $this->assertTrue(defined(ClassToTestPauseResume::class . '::B'));
+        $this->assertEquals($new_result_B, ClassToTestPauseResume::B);
+        $this->assertTrue(!defined(ClassToTestPauseResume::class . '::C'));
+    }
+
+    public function testPauseResumeFunctions()
+    {
+        $new_result = 2;
+        $old_result = 1;
+        // do redefine for function
+        \Badoo\SoftMocks::redefineFunction('functionToTestPauseResume', [], 'return ' . $new_result . ';');
+        // pause environment
+        \Badoo\SoftMocks::pause();
+
+        $this->assertEquals($old_result, (functionToTestPauseResume()) ());
+        // resume environment
+        \Badoo\SoftMocks::resume();
+
+        $this->assertEquals($new_result, (functionToTestPauseResume()) ());
+    }
+
+    public function testPauseResumeMethods()
+    {
+        $new_result = 2;
+        $old_result = 1;
+        // do redefines for method
+        \Badoo\SoftMocks::redefineMethod(ClassToTestPauseResume::class, 'method', [], 'return ' . $new_result . ';');
+        $class = new ClassToTestPauseResume();
+        // pause environment
+        \Badoo\SoftMocks::pause();
+
+        $this->assertEquals($old_result, $class->method());
+        // resume environment
+        \Badoo\SoftMocks::resume();
+
+        $this->assertEquals($new_result, $class->method());
+    }
+
+    public function generatorForReplace()
+    {
+        yield "b";
+    }
+
+    public function testPauseResumeGenerators()
+    {
+        $new_result = "b";
+        $old_result = "a";
+        // do redefines for generator
+        \Badoo\SoftMocks::redefineGenerator(ClassToTestPauseResume::class, 'generator', [$this, 'generatorForReplace']);
+        $class = new ClassToTestPauseResume();
+        // pause environment
+        \Badoo\SoftMocks::pause();
+
+        $values = [];
+        foreach ($class->generator() as $item) $values[] = $item;
+        $this->assertEquals($values, [$old_result]);
+        // resume environment
+        \Badoo\SoftMocks::resume();
+
+        $values = [];
+        foreach ($class->generator() as $item) $values[] = $item;
+        $this->assertEquals($values, [$new_result]);
+    }
 }
