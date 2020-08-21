@@ -2877,15 +2877,16 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $new_result = 2;
         $old_result = 1;
         // do redefine for function
-        \Badoo\SoftMocks::redefineFunction('functionToTestPauseResume', [], 'return ' . $new_result . ';');
+        \Badoo\SoftMocks::redefineFunction('Badoo\SoftMock\Tests\functionToTestPauseResume', '', 'return ' . $new_result . ';');
+
         // pause environment
         \Badoo\SoftMocks::pause();
 
-        $this->assertEquals($old_result, (functionToTestPauseResume()) ());
+        $this->assertEquals($old_result, functionToTestPauseResume());
         // resume environment
         \Badoo\SoftMocks::resume();
 
-        $this->assertEquals($new_result, (functionToTestPauseResume()) ());
+        $this->assertEquals($new_result, functionToTestPauseResume());
     }
 
     public function testPauseResumeMethods()
@@ -2893,7 +2894,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $new_result = 2;
         $old_result = 1;
         // do redefines for method
-        \Badoo\SoftMocks::redefineMethod(ClassToTestPauseResume::class, 'method', [], 'return ' . $new_result . ';');
+        \Badoo\SoftMocks::redefineMethod(ClassToTestPauseResume::class, 'method', '', 'return ' . $new_result . ';');
         $class = new ClassToTestPauseResume();
         // pause environment
         \Badoo\SoftMocks::pause();
