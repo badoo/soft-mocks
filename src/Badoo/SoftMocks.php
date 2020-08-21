@@ -1708,6 +1708,7 @@ class SoftMocks
     {
         self::restoreAllActual();
         self::restoreAllPaused();
+        self::$paused = false;
     }
     
     private static function restoreAllActual()
