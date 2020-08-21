@@ -1680,7 +1680,9 @@ class SoftMocks
         if (SoftMocksTraverser::isFunctionIgnored($func)) {
             throw new \RuntimeException("Function $func cannot be mocked using Soft Mocks");
         }
-        self::$func_mocks[$func] = ['args' => $functionArgs, 'code' => $fakeCode];
+        $mock_array = ['args' => $functionArgs, 'code' => $fakeCode];
+        if (self::$paused) self::$paused_func_mocks[$func] = $mock_array;
+        else self::$func_mocks[$func] = $mock_array;
     }
 
     public static function redefineExit($args, $fakeCode)
@@ -1688,7 +1690,9 @@ class SoftMocks
         if (self::$debug) {
             self::debug("Asked to redefine exit(\$code)");
         }
-        self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT] = ['args' => $args, 'code' => $fakeCode];
+        $mock_array = ['args' => $args, 'code' => $fakeCode];
+        if (self::$paused) self::$paused_lang_construct_mocks[self::LANG_CONSTRUCT_EXIT] = $mock_array;
+        else self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT] = $mock_array;
     }
 
     public static function restoreFunction($func)
@@ -1825,11 +1829,12 @@ class SoftMocks
         if (($real_classname && $real_classname != $class) || ($real_methodname && $real_methodname != $method)) {
             throw new \RuntimeException("Requested to mock $class::$method while method name is $real_classname::$real_methodname");
         }
-
-        self::$mocks[$class][$method] = [
+        $mock_array = [
             'args' => $functionArgs,
             'code' => self::generateCode($functionArgs, $params) . $fakeCode,
         ];
+        if (self::$paused) self::$paused_mocks[$class][$method] = $mock_array;
+        else self::$mocks[$class][$method] = $mock_array;
     }
 
     public static function restoreMethod($class, $method)
@@ -1856,7 +1861,8 @@ class SoftMocks
 
     public static function redefineGenerator($class, $method, callable $replacement)
     {
-        self::$generator_mocks[$class][$method] = $replacement;
+        if (self::$paused) self::$paused_generator_mocks[$class][$method] = $replacement;
+        else self::$generator_mocks[$class][$method] = $replacement;
     }
 
     public static function restoreGenerator($class, $method)
@@ -1880,7 +1886,8 @@ class SoftMocks
 
     public static function redefineNew($class, callable $constructorFunc)
     {
-        self::$new_mocks[$class] = $constructorFunc;
+        if (self::$paused) self::$paused_new_mocks[$class] = $constructorFunc;
+        else self::$new_mocks[$class] = $constructorFunc;
     }
 
     public static function restoreNew($class)
@@ -1915,7 +1922,8 @@ class SoftMocks
             throw new \RuntimeException("Constant $constantName cannot be mocked using Soft Mocks");
         }
 
-        self::$constant_mocks[$constantName] = $value;
+        if (self::$paused) self::$paused_constant_mocks[$constantName] = $value;
+        else self::$constant_mocks[$constantName] = $value;
     }
 
     public static function restoreConstant($constantName)
@@ -1944,8 +1952,9 @@ class SoftMocks
 
     public static function removeConstant($constantName)
     {
-        unset(self::$constant_mocks[$constantName]);
-        self::$removed_constants[$constantName] = true;
+        unset(self::$constant_mocks[$constantName], self::$paused_constant_mocks[$constantName]);
+        if (self::$paused) self::$paused_removed_constants[$constantName] = true;
+        else self::$removed_constants[$constantName] = true;
     }
 
     // there can be a situation when usage of static is not suitable for mocking so we need additional checks here

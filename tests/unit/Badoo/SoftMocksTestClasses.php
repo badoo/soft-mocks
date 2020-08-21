@@ -330,7 +330,16 @@ class ClassToTestPauseResume
     // const B = 2;
     const C = 3;
     
+    const A_inside_pause = 1;
+    // const B_inside_pause = 2;
+    const C_inside_pause = 3;
+    
     public function method()
+    {
+        return 1;
+    }
+    
+    public function methodInsidePause()
     {
         return 1;
     }
@@ -340,13 +349,18 @@ class ClassToTestPauseResume
         yield "a";
     }
     
-    public function exit()
+    public function generatorInsidePause()
     {
-        exit(1);
+        yield "a";
     }
 }
 
 function functionToTestPauseResume()
+{
+    return 1;
+}
+
+function functionToTestPauseResumeInsidePause()
 {
     return 1;
 }

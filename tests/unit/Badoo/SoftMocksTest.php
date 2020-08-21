@@ -2863,13 +2863,31 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(!defined(ClassToTestPauseResume::class . '::B'));
         $this->assertTrue(defined(ClassToTestPauseResume::class . '::C'));
         $this->assertEquals($old_result_C, ClassToTestPauseResume::C);
+        // do redefines inside pause
+        \Badoo\SoftMocks::redefineConstant(ClassToTestPauseResume::class . '::A_inside_pause', $new_result_A);
+        \Badoo\SoftMocks::redefineConstant(ClassToTestPauseResume::class . '::B_inside_pause', $new_result_B);
+        \Badoo\SoftMocks::removeConstant(ClassToTestPauseResume::class . '::C_inside_pause');
+    
+        $this->assertEquals($old_result_A, ClassToTestPauseResume::A_inside_pause);
+        $this->assertTrue(!defined(ClassToTestPauseResume::class . '::B_inside_pause'));
+        $this->assertTrue(defined(ClassToTestPauseResume::class . '::C_inside_pause'));
+        $this->assertEquals($old_result_C, ClassToTestPauseResume::C_inside_pause);
         // resume environment
         \Badoo\SoftMocks::resume();
 
         $this->assertEquals($new_result_A, ClassToTestPauseResume::A);
         $this->assertTrue(defined(ClassToTestPauseResume::class . '::B'));
-        $this->assertEquals($new_result_B, ClassToTestPauseResume::B);
+        if (defined('ClassToTestPauseResume::B')) {
+            $this->assertEquals($new_result_B, ClassToTestPauseResume::B);
+        }
         $this->assertTrue(!defined(ClassToTestPauseResume::class . '::C'));
+    
+        $this->assertEquals($new_result_A, ClassToTestPauseResume::A_inside_pause);
+        $this->assertTrue(defined(ClassToTestPauseResume::class . '::B_inside_pause'));
+        if (defined('ClassToTestPauseResume::B_inside_pause')) {
+            $this->assertEquals($new_result_B, ClassToTestPauseResume::B_inside_pause);
+        }
+        $this->assertTrue(!defined(ClassToTestPauseResume::class . '::C_inside_pause'));
     }
 
     public function testPauseResumeFunctions()
@@ -2883,10 +2901,15 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::pause();
 
         $this->assertEquals($old_result, functionToTestPauseResume());
+        // do redefine inside pause
+        \Badoo\SoftMocks::redefineFunction('Badoo\SoftMock\Tests\functionToTestPauseResumeInsidePause', '', 'return ' . $new_result . ';');
+        $this->assertEquals($old_result, functionToTestPauseResumeInsidePause());
         // resume environment
         \Badoo\SoftMocks::resume();
 
         $this->assertEquals($new_result, functionToTestPauseResume());
+        
+        $this->assertEquals($new_result, functionToTestPauseResumeInsidePause());
     }
 
     public function testPauseResumeMethods()
@@ -2900,10 +2923,15 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::pause();
 
         $this->assertEquals($old_result, $class->method());
+        // do redefine inside pause
+        \Badoo\SoftMocks::redefineMethod(ClassToTestPauseResume::class, 'methodInsidePause', '', 'return ' . $new_result . ';');
+        $this->assertEquals($old_result, $class->methodInsidePause());
         // resume environment
         \Badoo\SoftMocks::resume();
 
         $this->assertEquals($new_result, $class->method());
+        
+        $this->assertEquals($new_result, $class->methodInsidePause());
     }
 
     public function generatorForReplace()
@@ -2920,15 +2948,25 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $class = new ClassToTestPauseResume();
         // pause environment
         \Badoo\SoftMocks::pause();
-
+        
         $values = [];
         foreach ($class->generator() as $item) $values[] = $item;
         $this->assertEquals($values, [$old_result]);
+    
+        // do redefine inside pause
+        \Badoo\SoftMocks::redefineGenerator(ClassToTestPauseResume::class, 'generatorInsidePause', [$this, 'generatorForReplace']);
+        $values_inside_pause = [];
+        foreach ($class->generatorInsidePause() as $item) $values_inside_pause[] = $item;
+        $this->assertEquals($values_inside_pause, [$old_result]);
         // resume environment
         \Badoo\SoftMocks::resume();
 
         $values = [];
         foreach ($class->generator() as $item) $values[] = $item;
         $this->assertEquals($values, [$new_result]);
+    
+        $values_inside_pause = [];
+        foreach ($class->generatorInsidePause() as $item) $values_inside_pause[] = $item;
+        $this->assertEquals($values_inside_pause, [$new_result]);
     }
 }
