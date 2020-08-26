@@ -1,5 +1,14 @@
 # SoftMocks ChangeLog
 
+## v3.1.0
+
+The are next changes:
+
+- add pause/resume:
+    - call method \Badoo\SoftMocks::pause to disable all mocks
+    <br>more mocks can be added when SoftMocks are on pause
+    - call method \Badoo\SoftMocks::resume to enable all mocks
+    
 ## v3.0.4
 
 There are next changes:
