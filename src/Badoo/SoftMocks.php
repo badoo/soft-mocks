@@ -414,6 +414,8 @@ class SoftMocks
 {
     const MOCKS_CACHE_TOUCHTIME = 86400; // 1 day
 
+    const LOCK_FILE_PATH_NAME = 'soft_mocks_rewrite.lock';
+
     private static $rewrite_cache = [/* source => target */];
     private static $orig_paths = [/* target => source */];
 
@@ -469,7 +471,7 @@ class SoftMocks
     ];
     private static $base_paths = [];
     private static $prepare_for_rewrite_callback;
-    private static $lock_file_path = '/tmp/mocks/soft_mocks_rewrite.lock';
+    private static $lock_file_path;
 
     protected static function getEnvironment($key)
     {
@@ -489,6 +491,7 @@ class SoftMocks
             }
             self::setMocksCachePath($mocks_cache_path);
         }
+        self::setLockFilePath(rtrim(self::$mocks_cache_path . '/', '/') . self::LOCK_FILE_PATH_NAME);
         // todo constant will be removed in next major release, because it's like project path.
         if (!defined('SOFTMOCKS_ROOT_PATH')) {
             /**
@@ -726,13 +729,17 @@ class SoftMocks
      */
     public static function setMocksCachePath($mocks_cache_path)
     {
+        $dir_path = $mocks_cache_path;
         if (!empty($mocks_cache_path)) {
-            self::$mocks_cache_path = rtrim($mocks_cache_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+            $dir_path = rtrim($mocks_cache_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         }
 
-        if (!is_dir(self::$mocks_cache_path) && !mkdir(self::$mocks_cache_path, 0777) && !is_dir(self::$mocks_cache_path)) {
-            throw new \RuntimeException("Can't create cache dir for rewritten files at " . self::$mocks_cache_path);
+
+        if (!is_dir($dir_path) && !mkdir($dir_path, 0777) && !is_dir($dir_path)) {
+            throw new \RuntimeException("Can't create cache dir for rewritten files at " . $dir_path);
         }
+
+        self::$mocks_cache_path = realpath($dir_path) ?: $dir_path;
     }
 
     /**
