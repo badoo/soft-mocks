@@ -32,7 +32,8 @@ require_once "{$php_parser_dir}NodeVisitorAbstract.php";
 require_once "{$php_parser_dir}NodeTraverserInterface.php";
 require_once "{$php_parser_dir}Node.php";
 require_once "{$php_parser_dir}NodeAbstract.php";
-require_once "{$php_parser_dir}Lexer/TokenEmulator/TokenEmulatorInterface.php";
+require_once "{$php_parser_dir}Lexer/TokenEmulator/TokenEmulator.php";
+require_once "{$php_parser_dir}Lexer/TokenEmulator/KeywordEmulator.php";
 require_once "{$php_parser_dir}Node/Expr.php";
 require_once "{$php_parser_dir}Node/FunctionLike.php";
 // for prevent autoload problems
