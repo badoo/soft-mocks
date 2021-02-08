@@ -1,8 +1,15 @@
 # SoftMocks ChangeLog
 
+## v3.1.1
+
+There are next changes:
+
+- upgrade php-parser to 4.10.2
+- fix travis ci composer 2 problem
+
 ## v3.1.0
 
-The are next changes:
+There are next changes:
 
 - add pause/resume:
     - call method \Badoo\SoftMocks::pause to disable all mocks
