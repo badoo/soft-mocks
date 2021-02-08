@@ -18,6 +18,7 @@ env:
   - PHPUNIT_VERSION=^4.8.0
 
 before_script:
+  - composer self-update 1.10.17
   - composer require --dev --no-update "phpunit/phpunit":"${PHPUNIT_VERSION}"
   - composer install
   # dirty hack for compatible with old php versions
