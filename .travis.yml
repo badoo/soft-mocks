@@ -31,7 +31,7 @@ before_script:
   - vendor/bin/phpunit --version
 
 script:
-  - vendor/bin/phpunit --verbose --colors --coverage-clover=coverage.clover
+  - vendor/bin/phpunit --verbose --colors -dxdebug.mode=coverage --coverage-clover=coverage.clover
   - if [ -d /tmp/mocks_changed/ ]; then echo "Changed path shouldn't be found"; exit 1; else echo "Changed path not found"; fi;
   - SOFT_MOCKS_CACHE_PATH=/tmp/mocks_changed/ vendor/bin/phpunit --verbose --filter='testRedefineMethod'
   - if [ -d /tmp/mocks_changed/ ]; then echo "Changed path found"; else echo "Changed path should be found"; exit 1; fi;
