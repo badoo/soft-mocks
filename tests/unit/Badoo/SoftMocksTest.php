@@ -2884,6 +2884,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         );
     }
 
+    public function testConstantImporting()
+    {
+        $file = __DIR__ . '/fixtures/namespace2/constant_use.php';
+        $rewrite = \Badoo\SoftMocks::rewrite($file);
+        self::assertEquals('test1', include($rewrite));
+    }
+
     public function testPauseResumeConstants()
     {
         $old_result_A = 1;

@@ -1664,6 +1664,7 @@ class SoftMocks
     private static function rewriteContents($orig_file, $target_file, $contents)
     {
         $traverser = new \PhpParser\NodeTraverser();
+        $traverser->addVisitor(new \PhpParser\NodeVisitor\NameResolver());
         $traverser->addVisitor(new SoftMocksTraverser($orig_file));
 
         $prettyPrinter = new SoftMocksPrinter();

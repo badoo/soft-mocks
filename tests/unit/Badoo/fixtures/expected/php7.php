@@ -12,7 +12,7 @@ function replaceSomething($string) : string{
 
 class SomeClass{
     
-    const E = M_E;
+    const E = \M_E;
     public $a = 1;
     
     public function methodReturn() : string{if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
@@ -37,7 +37,7 @@ class SomeClass{
     
     public function methodNullableReturn() : ?array{if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
         
-        return null;}
+        return \null;}
     
     
     public function methodVoidReturn() : void{if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}
@@ -52,7 +52,7 @@ class SomeClass{
     
     public function methodParamNullableReturn(string $string) : ?string{if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$string];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
         
-        return $string ? $string : null;}
+        return $string ? $string : \null;}
     
     
     public function methodNullableParamNullableReturn(?string $string) : ?string{if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$string];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
@@ -74,6 +74,6 @@ class SomeClass{
         
         function SomeClass_methodWithNamedFunctionDefinition(){
             
-            return \Badoo\SoftMocks::getClassConst(SomeClass::class, 'E', null);}
+            return \Badoo\SoftMocks::getClassConst(\SomeClass::class, 'E', null);}
         
         return \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'SomeClass_methodWithNamedFunctionDefinition', []);}}

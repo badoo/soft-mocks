@@ -127,9 +127,9 @@ interface SomeInterface{
     public function getSomeValue();}
 
 
-class SomeClass implements SomeInterface{
+class SomeClass implements \Some\Name\Space\SomeInterface{
     
-    use SomeTrait;
+    use \Some\Name\Space\SomeTrait;
     
     const VALUE = 1;
     
@@ -151,4 +151,4 @@ class SomeClass implements SomeInterface{
 
 
 
-$some = new SomeClass();
+$some = new \Some\Name\Space\SomeClass();

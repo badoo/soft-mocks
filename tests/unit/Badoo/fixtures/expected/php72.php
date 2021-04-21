@@ -9,7 +9,7 @@ function a($cnt){
 
 function o() : object{
     
-    $o = new stdClass();
+    $o = new \stdClass();
     $o->value = \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'a', [1]);
     return $o;}
 
