@@ -497,7 +497,7 @@ class SoftMocks
         if (!self::$mocks_cache_path) {
             $mocks_cache_path = (string)static::getEnvironment('SOFT_MOCKS_CACHE_PATH');
             if (!$mocks_cache_path) {
-                $mocks_cache_path = '/tmp/mocks/';
+                $mocks_cache_path = realpath(sys_get_temp_dir()) . '/mocks/';
             }
             self::setMocksCachePath($mocks_cache_path);
         }
@@ -1395,6 +1395,11 @@ class SoftMocks
                 return SoftMocksFunctionCreator::run($obj, $class, $args, self::$mocks[$decl_class][$method]);
             }
         } catch (\ReflectionException $e) {
+            if (\method_exists($e, 'getPrevious') && $e->getPrevious()) {
+                // If there's an underlying error (e.g. an exception thrown during autoloading) - we need to pass it
+                throw $e->getPrevious();
+            }
+
             if (method_exists($obj, '__call')) {
                 $Rm = new \ReflectionMethod($obj, '__call');
                 $Rm->setAccessible(true);
@@ -1429,6 +1434,11 @@ class SoftMocks
                 return SoftMocksFunctionCreator::run(null, $class, $args, self::$mocks[$decl_class][$method]);
             }
         } catch (\ReflectionException $e) {
+            if (\method_exists($e, 'getPrevious') && $e->getPrevious()) {
+                // If there's an underlying error (e.g. an exception thrown during autoloading) - we need to pass it
+                throw $e->getPrevious();
+            }
+
             if (method_exists($class, '__callStatic')) {
                 $Rm = new \ReflectionMethod($class, '__callStatic');
                 $Rm->setAccessible(true);
@@ -1622,7 +1632,14 @@ class SoftMocks
                         }
                     }
                     $declaring_class = $ConstantReflection->getDeclaringClass()->getName();
-                } catch (\ReflectionException $Exception) {/* if we add new constant */}
+                } catch (\ReflectionException $Exception) {
+                    if (\method_exists($Exception, 'getPrevious') && $Exception->getPrevious()) {
+                        // If there's an underlying error (e.g. an exception thrown during autoloading) - we need to pass it
+                        throw $Exception->getPrevious();
+                    } else {
+                        /* if we add new constant */
+                    }
+                }
                 if (!$declaring_class) {
                     $declaring_class = false;
                 }

@@ -1,0 +1,11 @@
+<?php
+
+namespace Badoo\SoftMock\Tests\Fixtures;
+
+class InvalidRedefine extends \Badoo\SoftMock\Tests\ParentMismatchBaseTestClass
+{
+    const TEST = 'test';
+    public static function f() {
+        return static::TEST;
+    }
+}

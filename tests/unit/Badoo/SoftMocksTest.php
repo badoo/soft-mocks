@@ -2813,9 +2813,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         self::assertSame(2, ClassWithCallViaVariable::callAViaVariable());
     }
 
-    public function providerInvalid()
+    public function providerInvalidFatal()
     {
-        $files = glob(__DIR__ . '/fixtures/invalid/*.phpi');
+        $files = glob(__DIR__ . '/fixtures/invalid_fatal/*.phpi');
         $result = array_map(
             function ($filename) {
                 return [basename($filename)];
@@ -2826,13 +2826,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider providerInvalid
+     * @dataProvider providerInvalidFatal
      *
      * @param $filename
      */
     public function testParseErrors($filename)
     {
-        $filename = __DIR__ . '/fixtures/invalid/' . $filename;
+        $filename = __DIR__ . '/fixtures/invalid_fatal/' . $filename;
 
         $exception_message = "File: {$filename}, message: File: {$filename}";
         if (\method_exists($this, 'expectExceptionMessage')) {
@@ -2844,6 +2844,44 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         }
 
         \Badoo\SoftMocks::rewrite($filename);
+    }
+
+    public function testInvalidRedefine()
+    {
+        $exception_message = "Declaration of Badoo\SoftMock\Tests\Fixtures\InvalidRedefine::f() should be compatible with Badoo\SoftMock\Tests\ParentMismatchBaseTestClass::f(\$c)";
+        if (\method_exists($this, 'expectExceptionMessage')) {
+            $this->expectException(\PHPUnit\Framework\Error\Warning::class);
+            $this->expectExceptionMessage($exception_message);
+        } else {
+            // for phpunit 4.x
+            $this->setExpectedException(\PHPUnit\Framework\Error\Warning::class, $exception_message);
+        }
+
+        require_once \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/invalid_warning/autoload.php');
+        \Badoo\SoftMocks::getClassConst(
+            'Badoo\SoftMock\Tests\Fixtures\InvalidRedefine',
+            'TEST',
+            'Badoo\SoftMock\Tests\Fixtures\InvalidRedefine'
+        );
+    }
+
+    public function testExceptionInBody()
+    {
+        $exception_message = "real exception";
+        if (\method_exists($this, 'expectExceptionMessage')) {
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage($exception_message);
+        } else {
+            // for phpunit 4.x
+            $this->setExpectedException(\RuntimeException::class, $exception_message);
+        }
+
+        require_once \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/invalid_warning/autoload.php');
+        \Badoo\SoftMocks::getClassConst(
+            'Badoo\SoftMock\Tests\Fixtures\ExceptionInBody',
+            'TEST',
+            'Badoo\SoftMock\Tests\Fixtures\ExceptionInBody'
+        );
     }
 
     public function testPauseResumeConstants()

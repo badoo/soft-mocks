@@ -1,0 +1,10 @@
+<?php
+
+namespace Badoo\SoftMock\Tests\Fixtures;
+
+class ExceptionInBody extends \Badoo\SoftMock\Tests\ParentMismatchBaseTestClass
+{
+    public const TEST = 'test';
+}
+
+throw new \RuntimeException('real exception');
