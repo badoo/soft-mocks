@@ -481,7 +481,7 @@ class SoftMocks
     ];
     private static $base_paths = [];
     private static $prepare_for_rewrite_callback;
-    private static $lock_file_path = '/tmp/mocks/soft_mocks_rewrite.lock';
+    private static $lock_file_path;
 
     protected static function getEnvironment($key)
     {
@@ -500,6 +500,7 @@ class SoftMocks
                 $mocks_cache_path = realpath(sys_get_temp_dir()) . '/mocks/';
             }
             self::setMocksCachePath($mocks_cache_path);
+            self::$lock_file_path = $mocks_cache_path . '/soft_mocks_rewrite.lock';
         }
         // todo constant will be removed in next major release, because it's like project path.
         if (!defined('SOFTMOCKS_ROOT_PATH')) {
@@ -2876,5 +2877,28 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
         $NewNode->setAttribute('startLine', $Node->getLine());
         return $NewNode;
+    }
+
+    public function rewriteScalar_Encapsed(\PhpParser\Node\Scalar\Encapsed $Node)
+    {
+        $parts = $Node->parts;
+
+        $update_required = false;
+        foreach ($parts as &$part) {
+            if ($part instanceof \PhpParser\Node\Expr\StaticCall) {
+                if (implode('\\', $part->class->parts) === '\\' . SoftMocks::class) {
+                    $update_required = true;
+                }
+            } elseif ($part instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
+                $part = new \PhpParser\Node\Scalar\Encapsed([$part]);
+            }
+        }
+        unset($part);
+
+        if ($update_required) {
+            return (new \PhpParser\BuilderFactory())->concat(...$parts);
+        }
+
+        return $Node;
     }
 }

@@ -1520,7 +1520,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertEquals(1, $Object->getA());
     }
 
-    public function testAnonymous()
+    public function testAnonymousClass()
     {
         require_once __DIR__ . '/AnonymousTestClass.php';
         static::assertEquals(1, AnonymousTestClass::SOMETHING);
