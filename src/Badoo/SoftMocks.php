@@ -1637,9 +1637,7 @@ class SoftMocks
                     if (\method_exists($Exception, 'getPrevious') && $Exception->getPrevious()) {
                         // If there's an underlying error (e.g. an exception thrown during autoloading) - we need to pass it
                         throw $Exception->getPrevious();
-                    } else {
-                        /* if we add new constant */
-                    }
+                    } else {/* if we add new constant */}
                 }
                 if (!$declaring_class) {
                     $declaring_class = false;
@@ -1733,7 +1731,7 @@ class SoftMocks
         self::restoreAllPaused();
         self::$paused = false;
     }
-    
+
     private static function restoreAllActual()
     {
         self::$mocks = [];
@@ -1744,7 +1742,7 @@ class SoftMocks
         self::restoreAllConstantsActual();
         self::restoreAllNewActual();
     }
-    
+
     private static function restoreAllPaused()
     {
         self::$paused_mocks = [];
@@ -1956,13 +1954,13 @@ class SoftMocks
         self::restoreAllConstantsActual();
         self::restoreAllConstantsPaused();
     }
-    
+
     private static function restoreAllConstantsActual()
     {
         self::$constant_mocks = [];
         self::$removed_constants = [];
     }
-    
+
     private static function restoreAllConstantsPaused()
     {
         self::$paused_constant_mocks = [];

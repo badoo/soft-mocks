@@ -7,8 +7,10 @@ $map = [
     'Badoo\SoftMock\Tests\Fixtures\ExceptionInBody' => $path . '/ExceptionInBody.phpi',
 ];
 
-spl_autoload_register(static function ($class) use ($map) {
-    if (isset($map[$class])) {
-        require_once $map[$class];
+spl_autoload_register(
+    static function ($class) use ($map) {
+        if (isset($map[$class])) {
+            require_once $map[$class];
+        }
     }
-});
+);
