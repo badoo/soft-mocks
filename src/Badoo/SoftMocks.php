@@ -2821,7 +2821,13 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
                 self::nodeArgsToArray($Node->args, $arg_is_ref),
             ]
         );
-        $NewNode->setAttribute('startLine', $Node->getLine());
+        $NewNode->setAttribute('startLine', $Node->getStartLine());
+        $NewNode->setAttribute('endLine', $Node->getStartLine());
+
+        foreach ($NewNode->args as $ArgNode) {
+            $ArgNode->setAttribute('startLine', $Node->getStartLine());
+            $ArgNode->setAttribute('endLine', $Node->getStartLine());
+        }
 
         return $NewNode;
     }
@@ -2888,13 +2894,23 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
                     $update_required = true;
                 }
             } elseif ($part instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
-                $part = new \PhpParser\Node\Scalar\Encapsed([$part]);
+                $NewNode = new \PhpParser\Node\Scalar\Encapsed([$part]);
+                $NewNode->setAttribute('startLine', $part->getStartLine());
+                $NewNode->setAttribute('endLine', $part->getEndLine());
+                $part = $NewNode;
             }
         }
         unset($part);
 
         if ($update_required) {
-            return (new \PhpParser\BuilderFactory())->concat(...$parts);
+            if (count($parts) > 1) {
+                $NewNode = (new \PhpParser\BuilderFactory())->concat(...$parts);
+                $NewNode->setAttribute('startLine', $Node->getStartLine());
+                $NewNode->setAttribute('endLine', $Node->getEndLine());
+                return $NewNode;
+            } else {
+                return $parts[0];
+            }
         }
 
         return $Node;

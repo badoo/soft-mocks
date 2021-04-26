@@ -5,10 +5,5 @@ $function = function ($input) {
 
 $f2 = 'sprintf';
 
-return \Badoo\SoftMocks::call(
-    __NAMESPACE__,
-    $function,
-    ['x']) . ":" . \Badoo\SoftMocks::call(
-    __NAMESPACE__,
-    $f2,
-    ['?%s?', 'x']);
+$str = \Badoo\SoftMocks::call(__NAMESPACE__, $function, ['x']) . ":" . \Badoo\SoftMocks::call(__NAMESPACE__, $f2, ['?%s?', 'x']) . \Badoo\SoftMocks::call(__NAMESPACE__, $f2, ['?%s?', 'x']);
+return \Badoo\SoftMocks::call(__NAMESPACE__, $function, ['x']) . ":" . \Badoo\SoftMocks::call(__NAMESPACE__, $f2, ['?%s?', 'x']);
