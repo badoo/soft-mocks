@@ -1,5 +1,19 @@
 # SoftMocks ChangeLog
 
+## v3.1.2
+
+There are next changes:
+
+- Added support for PHPUnit 8.4.3
+- Fixed unexpected multiline formatting when rewriting function calls
+- Fixed handling string-encapsulated function calls
+- Added support for fetching constants from imported namespaces, e.g.
+```php
+use Namespace;
+
+echo Namespace\CONSTANT_NAME;
+```
+
 ## v3.1.1
 
 There are next changes:
