@@ -688,7 +688,10 @@ class SoftMocks
                 "Can't parse installed packages json for get nikic/php-parser version for for right rewritten files cache: {$error}"
             );
         }
-        foreach ($installed as $package) {
+        // in composer 2 packages are stored in 'packages' key.
+        // composer-runtime-api could be used for this check, but it is available for composer 2 only
+        $packages = $installed['packages'] ?? $installed;
+        foreach ($packages as $package) {
             if (!isset($package['name'], $package['version'])) {
                 continue;
             }

@@ -145,7 +145,3 @@ index f93c962..8deb87b 100644
 +
          $prefix = false;
          $script = \realpath($GLOBALS['_SERVER']['SCRIPT_NAME']);
- 
--- 
-2.7.4
-

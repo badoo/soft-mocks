@@ -2849,12 +2849,19 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
     public function testInvalidRedefine()
     {
         $exception_message = "Declaration of Badoo\SoftMock\Tests\Fixtures\InvalidRedefine::f() should be compatible with Badoo\SoftMock\Tests\ParentMismatchBaseTestClass::f(\$c)";
+
+        if (class_exists('\PHPUnit\Framework\Error\Warning')) {
+            $warning_class = \PHPUnit\Framework\Error\Warning::class;
+        } else {
+            $warning_class = \PHPUnit_Framework_Error_Warning::class;
+        }
+        
         if (\method_exists($this, 'expectExceptionMessage')) {
-            $this->expectException(\PHPUnit\Framework\Error\Warning::class);
+            $this->expectException($warning_class);
             $this->expectExceptionMessage($exception_message);
         } else {
             // for phpunit 4.x
-            $this->setExpectedException(\PHPUnit\Framework\Error\Warning::class, $exception_message);
+            $this->setExpectedException($warning_class, $exception_message);
         }
 
         require_once \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/invalid_warning/autoload.php');

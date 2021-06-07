@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.1.3
+
+There are next changes:
+
+- Added support of composer 2
+
 ## v3.1.2
 
 There are next changes:

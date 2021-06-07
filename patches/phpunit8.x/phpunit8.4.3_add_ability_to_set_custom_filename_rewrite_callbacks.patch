@@ -136,7 +136,3 @@ index 7fd805049..bbe3e22e9 100644
 +
          $prefix = false;
          $script = \realpath($GLOBALS['_SERVER']['SCRIPT_NAME']);
-
-         if (\defined('__PHPUNIT_PHAR_ROOT__')) {
-             $prefix = __PHPUNIT_PHAR_ROOT__;
-         }

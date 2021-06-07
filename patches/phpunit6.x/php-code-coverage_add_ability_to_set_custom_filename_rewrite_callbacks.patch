@@ -55,6 +55,3 @@ index 3d99abb..bc7a86d 100644
          $filename = \realpath($filename);
  
          unset($this->whitelistedFiles[$filename]);
--- 
-2.7.4
-
