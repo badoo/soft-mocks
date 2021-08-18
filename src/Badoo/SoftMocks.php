@@ -687,6 +687,11 @@ class SoftMocks
                 "Can't parse installed packages json for get nikic/php-parser version for for right rewritten files cache: {$error}"
             );
         }
+        
+        // If the installed.json is the latest version then update the installed variable
+        if (array_key_exists('packages', $installed)) {
+            $installed = $installed['packages'];
+        }
         foreach ($installed as $package) {
             if (!isset($package['name'], $package['version'])) {
                 continue;
