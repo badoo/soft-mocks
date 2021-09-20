@@ -29,8 +29,8 @@ class ExampleTest extends \PHPUnit\Framework\TestCase
 
     public function testFunction()
     {
-        \Badoo\SoftMocks::redefineFunction('strlen', '$a', 'return 2;');
-        $this->assertEquals(2, strlen("a"));
+        \Badoo\SoftMocks::redefineFunction('md5', '$a', 'return "hash";');
+        $this->assertEquals('hash', md5("a"));
     }
 
     public function testConstant()
