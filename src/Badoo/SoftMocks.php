@@ -29,6 +29,16 @@ if (!function_exists('mb_orig_substr')) {
     {
         return strlen($string);
     }
+
+    function mb_orig_strtolower($string)
+    {
+        return strtolower($string);
+    }
+
+    function mb_orig_substr_count($haystack, $needle, $offset = 0, $length = null)
+    {
+        return $length !== null ? substr_count($haystack, $needle, $offset, $length) : substr_count($haystack, $needle, $offset);
+    }
 }
 
 class SoftMocksFunctionCreator
@@ -74,7 +84,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
             $comments = $node->getComments();
             $comments = !empty($comments) ? ($this->nl . $this->pComments($node->getComments())) : '';
-            $this->cur_ln += substr_count($comments, "\n");
+            $this->cur_ln += mb_orig_substr_count($comments, "\n");
 
             if ($node->getLine() > $this->cur_ln) {
                 $comments .= $this->nl;
@@ -83,7 +93,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
             $row .= $comments . $this->p($node);
 
-            $this->cur_ln = $cur_ln + substr_count($row, "\n"); // get rid of cur_ln modifications in deeper context
+            $this->cur_ln = $cur_ln + mb_orig_substr_count($row, "\n"); // get rid of cur_ln modifications in deeper context
 
             $result .= $row;
         }
@@ -163,8 +173,8 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         }
         $prefix = "";
         if (!$this->areNodesSingleLine($node->items)) {
-            if ($node->getAttribute('endLine') - ($node->getLine() + substr_count($res, "\n")) >= 0) {
-                $prefix = str_repeat("\n", $node->getAttribute('endLine') - ($node->getLine() + substr_count($res, "\n")));
+            if ($node->getAttribute('endLine') - ($node->getLine() + mb_orig_substr_count($res, "\n")) >= 0) {
+                $prefix = str_repeat("\n", $node->getAttribute('endLine') - ($node->getLine() + mb_orig_substr_count($res, "\n")));
             }
         }
         $res .= $prefix . $suffix;
@@ -381,7 +391,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
                 $return .= '{' . trim($this->p($element)) . '}';
             }
         }
-        $this->cur_ln = $bak_line + substr_count($return, "\n");
+        $this->cur_ln = $bak_line + mb_orig_substr_count($return, "\n");
 
         return $return;
     }
@@ -2843,7 +2853,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
         $name = $Node->name->toString();
 
-        if (isset(self::$ignore_constants[strtolower($name)])) {
+        if (isset(self::$ignore_constants[mb_orig_strtolower($name)])) {
             return null;
         }
 
@@ -2862,7 +2872,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
     public function rewriteExpr_ClassConstFetch(\PhpParser\Node\Expr\ClassConstFetch $Node)
     {
-        if ($this->disable_const_rewrite_level > 0 || strtolower($Node->name) === 'class') {
+        if ($this->disable_const_rewrite_level > 0 || mb_orig_strtolower($Node->name) === 'class') {
             return null;
         }
 

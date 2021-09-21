@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.1.4
+
+There are next changes:
+
+- Removed usages of mbstring-overloaded functions
+
 ## v3.1.3
 
 There are next changes:
