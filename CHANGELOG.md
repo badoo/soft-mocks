@@ -1,5 +1,12 @@
 # SoftMocks ChangeLog
 
+## v3.1.5
+
+There are next changes:
+
+- Fixed issue with creating extra empty lines
+- ext-mbstring is now required for processing
+
 ## v3.1.4
 
 There are next changes:
