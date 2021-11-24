@@ -10,8 +10,9 @@
     }
   ],
   "require": {
-    "ext-json": "*",
     "php": ">=7.0",
+    "ext-json": "*",
+    "ext-mbstring": "*",
     "nikic/php-parser": "^4.10.2"
   },
   "require-dev": {
