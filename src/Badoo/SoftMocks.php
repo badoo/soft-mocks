@@ -1007,8 +1007,10 @@ class SoftMocks
 
     private static function shouldRewriteFile($file)
     {
-        if (strpos($file, self::$mocks_cache_path) === 0
-            || strpos($file, self::getMocksDirVersion() . DIRECTORY_SEPARATOR) === 0) {
+        if (
+            strpos($file, self::$mocks_cache_path) === 0 ||
+            strpos($file, self::getMocksDirVersion() . DIRECTORY_SEPARATOR) === 0
+        ) {
             return false;
         }
 
