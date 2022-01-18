@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.1.6
+
+There are next changes:
+
+- Removed mb_orig_* helpers, as well as their usages
+
 ## v3.1.5
 
 There are next changes:
