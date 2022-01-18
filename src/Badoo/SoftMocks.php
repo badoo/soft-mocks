@@ -8,29 +8,6 @@
 
 namespace Badoo;
 
-// Remove this when mb_overload is no longer available for usage in PHP
-if (!function_exists('mb_orig_substr')) {
-    function mb_orig_substr($str, $start, $length = null)
-    {
-        return $length === null ? substr($str, $start) : substr($str, $start, $length);
-    }
-
-    function mb_orig_stripos($haystack, $needle, $offset = 0)
-    {
-        return stripos($haystack, $needle, $offset);
-    }
-
-    function mb_orig_strpos($haystack, $needle, $offset = 0)
-    {
-        return strpos($haystack, $needle, $offset);
-    }
-
-    function mb_orig_strlen($string)
-    {
-        return strlen($string);
-    }
-}
-
 class SoftMocksFunctionCreator
 {
     public static function run($obj, $class, $params, $mocks)
@@ -101,7 +78,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
         foreach ($comments as $comment) {
             $reformattedText = $comment->getReformattedText();
-            if (mb_orig_strpos($reformattedText, '/**') === 0) {
+            if (strpos($reformattedText, '/**') === 0) {
                 $formattedComments[] = $reformattedText;
             }
         }
@@ -909,14 +886,14 @@ class SoftMocks
                     $parts = explode('(', trim($str), 2);
                     if (count($parts) > 1) {
                         $filename = $parts[0];
-                        if (mb_orig_stripos($filename, 'PHPUnit') !== false) {
+                        if (stripos($filename, 'PHPUnit') !== false) {
                             return false;
                         }
                     }
 
-                    return mb_orig_strpos($str, 'PHPUnit_Framework_ExpectationFailedException') === false
-                        && mb_orig_strpos($str, '{main}') === false
-                        && mb_orig_strpos($str, basename(__FILE__)) === false;
+                    return strpos($str, 'PHPUnit_Framework_ExpectationFailedException') === false
+                        && strpos($str, '{main}') === false
+                        && strpos($str, basename(__FILE__)) === false;
                 }
             )
         ) . "\n";
@@ -942,8 +919,8 @@ class SoftMocks
     public static function clearBasePath($file)
     {
         foreach (self::$base_paths as $base_path) {
-            if (mb_orig_strpos($file, $base_path) === 0) {
-                return mb_orig_substr($file, 0, mb_orig_strlen($base_path));
+            if (strpos($file, $base_path) === 0) {
+                return substr($file, 0, strlen($base_path));
             }
         }
         return $file;
@@ -960,14 +937,14 @@ class SoftMocks
             $parts[] = phpversion();
 
             if (defined(PHP_BINARY)) {
-                $parts[] = mb_orig_substr(md5_file(PHP_BINARY), 0, 7);
+                $parts[] = substr(md5_file(PHP_BINARY), 0, 7);
             }
 
-            $parts[] = mb_orig_substr(md5(new \ReflectionExtension("tokenizer")), 0, 7);
+            $parts[] = substr(md5(new \ReflectionExtension("tokenizer")), 0, 7);
 
             $parts[] = self::$parser_version;
 
-            $parts[] = mb_orig_substr(md5_file(__FILE__), 0, 7);
+            $parts[] = substr(md5_file(__FILE__), 0, 7);
 
             self::$mocks_dir_version = implode('-', $parts);
         }
@@ -1030,13 +1007,15 @@ class SoftMocks
 
     private static function shouldRewriteFile($file)
     {
-        if (mb_orig_strpos($file, self::$mocks_cache_path) === 0
-            || mb_orig_strpos($file, self::getMocksDirVersion() . DIRECTORY_SEPARATOR) === 0) {
+        if (
+            strpos($file, self::$mocks_cache_path) === 0 ||
+            strpos($file, self::getMocksDirVersion() . DIRECTORY_SEPARATOR) === 0
+        ) {
             return false;
         }
 
         foreach (self::$ignore_sub_paths as $ignore_path) {
-            if (mb_orig_strpos($file, $ignore_path) !== false) {
+            if (strpos($file, $ignore_path) !== false) {
                 return false;
             }
         }
@@ -1056,8 +1035,8 @@ class SoftMocks
         }
 
         $md5 = self::getMd5ForSuffix($clean_filepath, $md5_file);
-        if (self::$project_path && mb_orig_strpos($file, self::$project_path) === 0) {
-            $file_in_project = mb_orig_substr($file, mb_orig_strlen(self::$project_path));
+        if (self::$project_path && strpos($file, self::$project_path) === 0) {
+            $file_in_project = substr($file, strlen(self::$project_path));
         } else {
             $file_in_project = $file;
         }
@@ -1068,10 +1047,10 @@ class SoftMocks
 
     private static function getCleanFilePath($file)
     {
-        if (mb_orig_strpos($file, SOFTMOCKS_ROOT_PATH) !== 0) {
+        if (strpos($file, SOFTMOCKS_ROOT_PATH) !== 0) {
             return $file;
         }
-        return mb_orig_substr($file, mb_orig_strlen(SOFTMOCKS_ROOT_PATH));
+        return substr($file, strlen(SOFTMOCKS_ROOT_PATH));
     }
 
     private static function getMd5ForSuffix($clean_filepath, $md5_file)
@@ -1237,15 +1216,15 @@ class SoftMocks
         $target_dir = dirname($target_file);
         $base_mocks_path = '';
         $relative_target_dir = $target_dir;
-        if (mb_orig_strpos($file, self::$mocks_cache_path) === 0) {
+        if (strpos($file, self::$mocks_cache_path) === 0) {
             $base_mocks_path = self::$mocks_cache_path;
-            $relative_target_dir = mb_orig_substr($target_dir, mb_orig_strlen($base_mocks_path));
+            $relative_target_dir = substr($target_dir, strlen($base_mocks_path));
         }
         self::createDirRecursive($base_mocks_path, $relative_target_dir);
 
         $tmp_file = $target_file . ".tmp." . uniqid(getmypid());
         $wrote = file_put_contents($tmp_file, $contents);
-        $expected_bytes = mb_orig_strlen($contents);
+        $expected_bytes = strlen($contents);
         if ($wrote !== $expected_bytes) {
             throw new \RuntimeException('Could not fully write rewritten content! Wrote ' . var_export($wrote, true) . " instead of $expected_bytes");
         }
@@ -1308,7 +1287,7 @@ class SoftMocks
      */
     public static function call($ns, $callable, $args)
     {
-        if (is_scalar($callable) && mb_orig_strpos($callable, '::') === false) {
+        if (is_scalar($callable) && strpos($callable, '::') === false) {
             return self::callFunction($ns, $callable, $args);
         }
 
@@ -2093,7 +2072,7 @@ class SoftMocks
             }
 
             $method = $callable[1];
-        } else if (is_scalar($callable) && mb_orig_strpos($callable, '::') !== false) {
+        } else if (is_scalar($callable) && strpos($callable, '::') !== false) {
             list($class, $method) = explode("::", $callable);
         } else {
             return call_user_func_array($callable, $args);
@@ -2340,8 +2319,8 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
     public function __construct($filename)
     {
         $this->filename = realpath($filename);
-        if (mb_orig_strpos($this->filename, SOFTMOCKS_ROOT_PATH) === 0) {
-            $this->filename = mb_orig_substr($this->filename, mb_orig_strlen(SOFTMOCKS_ROOT_PATH));
+        if (strpos($this->filename, SOFTMOCKS_ROOT_PATH) === 0) {
+            $this->filename = substr($this->filename, strlen(SOFTMOCKS_ROOT_PATH));
         }
     }
 
