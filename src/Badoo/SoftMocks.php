@@ -920,7 +920,7 @@ class SoftMocks
     {
         foreach (self::$base_paths as $base_path) {
             if (strpos($file, $base_path) === 0) {
-                return substr($file, 0, strlen($base_path));
+                return substr($file, strlen($base_path));
             }
         }
         return $file;
