@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.1.7
+
+There are next changes:
+
+- Fixed base path cutoff
+
 ## v3.1.6
 
 There are next changes:

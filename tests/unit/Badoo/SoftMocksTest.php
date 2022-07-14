@@ -3021,4 +3021,11 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         foreach ($class->generatorInsidePause() as $item) $values_inside_pause[] = $item;
         $this->assertEquals($values_inside_pause, [$new_result]);
     }
+
+    public function testClearBasePath()
+    {
+        \Badoo\SoftMocks::setBasePaths([__DIR__ . '/']);
+        $file = \Badoo\SoftMocks::clearBasePath(__FILE__);
+        self::assertEquals(basename(__FILE__), $file);
+    }
 }
