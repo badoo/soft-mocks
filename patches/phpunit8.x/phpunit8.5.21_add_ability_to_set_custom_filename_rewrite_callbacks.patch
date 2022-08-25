@@ -1,0 +1,139 @@
+diff --git a/src/Framework/TestSuite.php b/src/Framework/TestSuite.php
+index 144cb6f1b..9660ce7c3 100644
+--- a/src/Framework/TestSuite.php
++++ b/src/Framework/TestSuite.php
+@@ -417,7 +417,13 @@ public function addTestFile(string $filename): void
+                 }
+                 // @codeCoverageIgnoreEnd
+
+-                if ($class->getFileName() == $filename) {
++                $classFile = $class->getFileName();
++
++                if ($restoreCallback = Fileloader::getFilenameRestoreCallback()) {
++                    $classFile = $restoreCallback($classFile);
++                }
++
++                if ($classFile == $filename) {
+                     $newClasses = [$className];
+                     unset($this->foundClasses[$i]);
+
+diff --git a/src/Runner/StandardTestSuiteLoader.php b/src/Runner/StandardTestSuiteLoader.php
+index b658dfcc4..2c845be2a 100644
+--- a/src/Runner/StandardTestSuiteLoader.php
++++ b/src/Runner/StandardTestSuiteLoader.php
+@@ -97,6 +97,10 @@ public function load(string $suiteClassName, string $suiteClassFile = ''): Refle
+
+                 $classFile = $class->getFileName();
+
++                if ($restoreCallback = Fileloader::getFilenameRestoreCallback()) {
++                    $classFile = $restoreCallback($classFile);
++                }
++
+                 if ($class->isSubclassOf($testCaseClass) && !$class->isAbstract()) {
+                     $suiteClassName = $loadedClass;
+                     $testCaseClass  = $loadedClass;
+@@ -143,7 +147,13 @@ public function load(string $suiteClassName, string $suiteClassFile = ''): Refle
+             }
+             // @codeCoverageIgnoreEnd
+
+-            if ($class->getFileName() == realpath($suiteClassFile)) {
++            $classFile = $class->getFileName();
++
++            if ($restoreCallback = Fileloader::getFilenameRestoreCallback()) {
++                $classFile = $restoreCallback($classFile);
++            }
++
++            if ($classFile == realpath($suiteClassFile)) {
+                 return $class;
+             }
+         }
+diff --git a/src/Util/FileLoader.php b/src/Util/FileLoader.php
+index 1390d8cf4..74832fe06 100644
+--- a/src/Util/FileLoader.php
++++ b/src/Util/FileLoader.php
+@@ -23,6 +23,40 @@
+  */
+ final class FileLoader
+ {
++    /** @var Callable */
++    private static $filename_rewrite_callback;
++
++    /** @var Callable */
++    private static $filename_restore_callback;
++
++    /**
++     * Provide callback for rewriting test file names that is called when loading suite files
++     * @param callable $callback (source_filename => rewritten_filename)
++     */
++    public static function setFilenameRewriteCallback(Callable $callback)
++    {
++        self::$filename_rewrite_callback = $callback;
++    }
++
++    public static function getFilenameRewriteCallback()
++    {
++            return self::$filename_rewrite_callback;
++    }
++
++    /**
++     * Provide callback for restoring rewritten test file names
++     * @param callable $callback (rewritten_filename => source_filename)
++     */
++    public static function setFilenameRestoreCallback(Callable $callback)
++    {
++            self::$filename_restore_callback = $callback;
++    }
++
++    public static function getFilenameRestoreCallback()
++    {
++            return self::$filename_restore_callback;
++    }
++
+     /**
+      * Checks if a PHP sourcecode file is readable. The sourcecode file is loaded through the load() method.
+      *
+@@ -63,7 +97,12 @@ public static function load(string $filename): void
+     {
+         $oldVariableNames = array_keys(get_defined_vars());
+
+-        include_once $filename;
++        if ($cb = self::$filename_rewrite_callback) {
++            $new_filename = $cb($filename);
++            include_once $new_filename;
++        } else {
++            include_once $filename;
++        }
+
+         $newVariables = get_defined_vars();
+
+diff --git a/src/Util/Filter.php b/src/Util/Filter.php
+index 06f58d55d..c4bbfbfe4 100644
+--- a/src/Util/Filter.php
++++ b/src/Util/Filter.php
+@@ -25,11 +25,26 @@
+  */
+ final class Filter
+ {
++    private static $custom_stacktrace_callback;
++
++    /**
++     * Set custom stack trace callback that can deal with rewritten files and extra stack trace lines
++     * @param callable $callback (Exception $e, $asString = true): string
++     */
++    public static function setCustomStackTraceCallback(Callable $callback)
++    {
++        self::$custom_stacktrace_callback = $callback;
++    }
++
+     /**
+      * @throws Exception
+      */
+     public static function getFilteredStacktrace(Throwable $t): string
+     {
++        if ($stackTraceCb = self::$custom_stacktrace_callback) {
++            return $stackTraceCb($t);
++        }
++
+         $filteredStacktrace = '';
+
+         if ($t instanceof SyntheticError) {

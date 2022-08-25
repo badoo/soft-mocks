@@ -17,7 +17,7 @@
   },
   "require-dev": {
     "vaimo/composer-patches": "4.22.4",
-    "phpunit/phpunit": "^8.5.12 <8.5.22"
+    "phpunit/phpunit": ">=8.5.21 <8.5.22"
   },
   "config": {
     "preferred-install": "source",
@@ -116,6 +116,12 @@
           "label": "Add ability to set custom filename rewrite callbacks",
           "source": "patches/phpunit8.x/phpunit8.4.3_add_ability_to_set_custom_filename_rewrite_callbacks.patch",
           "version": ">=8.4.3 <8.5.0",
+          "level": "1"
+        },
+        {
+          "label": "Add ability to set custom filename rewrite callbacks",
+          "source": "patches/phpunit8.x/phpunit8.5.21_add_ability_to_set_custom_filename_rewrite_callbacks.patch",
+          "version": ">=8.5.21 <8.5.22",
           "level": "1"
         }
       ],
