@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.2.0
+
+There are next changes:
+
+- Upgrade phpunit dev dependency to be able use PHP 8.0
+
 ## v3.1.7
 
 There are next changes:
