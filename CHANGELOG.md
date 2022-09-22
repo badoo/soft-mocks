@@ -5,6 +5,7 @@
 There are next changes:
 
 - PHP 8.0 support: added support for non-capturing catches
+- PHP 8.0 support: added attributes printing inside the mocked files
 
 ## v3.2.0
 

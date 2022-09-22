@@ -234,8 +234,14 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $node)
     {
+        $ret = '';
+        if ($node->attrGroups) {
+            $ret = $this->pStmts($node->attrGroups);
+        }
+
         $this->cur_ln = $node->getLine();
-        return $this->pModifiers($node->flags)
+        return $ret
+            . $this->pModifiers($node->flags)
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
             . (null !== $node->returnType ? ' : ' . $this->p($node->returnType) : '')
@@ -244,8 +250,14 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pStmt_Function(\PhpParser\Node\Stmt\Function_ $node)
     {
+        $ret = '';
+        if ($node->attrGroups) {
+            $ret = $this->pStmts($node->attrGroups);
+        }
+
         $this->cur_ln = $node->getLine();
-        return 'function ' . ($node->byRef ? '&' : '') . $node->name
+        return $ret
+            . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
             . (null !== $node->returnType ? ' : ' . $this->p($node->returnType) : '')
             . '{' . $this->pStmts($node->stmts) . '}';
@@ -342,7 +354,13 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pClassCommon(\PhpParser\Node\Stmt\Class_ $node, $afterClassToken)
     {
-        return $this->pModifiers($node->flags)
+        $ret = '';
+        if ($node->attrGroups) {
+            $ret = $this->pStmts($node->attrGroups);
+        }
+
+        return $ret
+            . $this->pModifiers($node->flags)
             . 'class' . $afterClassToken
             . (null !== $node->extends ? ' extends ' . $this->p($node->extends) : '')
             . (!empty($node->implements) ? ' implements ' . $this->pCommaSeparated($node->implements) : '')
