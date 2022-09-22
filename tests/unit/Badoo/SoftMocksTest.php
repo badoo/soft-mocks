@@ -27,6 +27,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         }
     }
 
+    public static function markTestSkippedForPHPVersionAbove($php_version)
+    {
+        if (version_compare(phpversion(), $php_version, '>')) {
+            static::markTestSkipped('You PHP version do not support this, you need need PHP lower than ' . $php_version);
+        }
+    }
+
     public function testExitMock()
     {
         \Badoo\SoftMocks::redefineExit(
@@ -2706,6 +2713,14 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             static::markTestSkippedForPHPVersionBelow('7.4.0');
         }
 
+        if ($filename === 'php80.php') {
+            static::markTestSkippedForPHPVersionBelow('8.0.0');
+        }
+
+        if ($filename === 'php81.php') {
+            static::markTestSkippedForPHPVersionBelow('8.1.0');
+        }
+
         $result = \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/original/' . $filename);
         $this->assertNotFalse($result, "Rewrite failed");
 
@@ -2848,6 +2863,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     public function testInvalidRedefine()
     {
+        self::markTestSkippedForPHPVersionAbove('8.0');
+
         $exception_message = "Declaration of Badoo\SoftMock\Tests\Fixtures\InvalidRedefine::f() should be compatible with Badoo\SoftMock\Tests\ParentMismatchBaseTestClass::f(\$c)";
 
         if (class_exists('\PHPUnit\Framework\Error\Warning')) {
