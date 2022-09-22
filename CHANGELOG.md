@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.3.0
+
+There are next changes:
+
+- PHP 8.0 support: added support for non-capturing catches
+
 ## v3.2.0
 
 There are next changes:

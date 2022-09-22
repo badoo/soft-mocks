@@ -328,9 +328,14 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pStmt_Catch(\PhpParser\Node\Stmt\Catch_ $node)
     {
-        return 'catch (' . $this->pImplode($node->types, ' | ') . ' '
+        if ($node->var) {
+            return 'catch (' . $this->pImplode($node->types, ' | ') . ' '
             . $this->p($node->var)
             . ') {' . $this->pStmts($node->stmts) . '}';
+        } else { // handle the non-capturing catch
+            return 'catch (' . $this->pImplode($node->types, ' | ')
+            . ') {' . $this->pStmts($node->stmts) . '}';
+        }
     }
 
     // Helpers
