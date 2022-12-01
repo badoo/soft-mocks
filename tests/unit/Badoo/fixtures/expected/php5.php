@@ -31,9 +31,9 @@ END;
     
     
     
-    \Badoo\SoftMocks::callExit();} elseif (false) {
-    
-    echo "Never1!\n";} else {
+    \Badoo\SoftMocks::callExit();} 
+    elseif (false) {
+        echo "Never1!\n";} else {
     if (false) {
         echo "Never2!\n";} else {
         

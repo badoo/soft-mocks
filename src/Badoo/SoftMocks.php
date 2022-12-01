@@ -281,12 +281,13 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         $this->cur_ln = $node->getLine();
         return 'if (' . $this->p($node->cond) . ') {'
             . $this->pStmts($node->stmts) . '}'
-            . ($node->elseifs ? ' ' . $this->pImplode($node->elseifs, ' ') : '')
+            . ($node->elseifs ? ' ' . $this->pStmts($node->elseifs, ' ') : '')
             . (null !== $node->else ? ' ' . $this->p($node->else) : '');
     }
 
     protected function pStmt_ElseIf(\PhpParser\Node\Stmt\ElseIf_ $node)
     {
+        $this->cur_ln = $node->getLine();
         return 'elseif (' . $this->p($node->cond) . ') {'
             . $this->pStmts($node->stmts) . '}';
     }
