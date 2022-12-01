@@ -111,6 +111,19 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return $result;
     }
 
+    /**
+     * Handles (and removes) no-indent and doc-string-end tokens.
+     *
+     * @param string $str
+     * @return string
+     */
+    protected function handleMagicTokens(string $str) : string {
+        $str = str_replace($this->docStringEndToken . ';', ';', $str);
+        $str = str_replace($this->docStringEndToken, "\n", $str);
+
+        return $str;
+    }
+
     public function prettyPrintFile(array $stmts) : string
     {
         $this->cur_ln = 1;
