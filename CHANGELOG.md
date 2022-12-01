@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.3.1
+
+There are next changes:
+
+- Fixed lines preserving for heredec and elseif
+
 ## v3.3.0
 
 There are next changes:
