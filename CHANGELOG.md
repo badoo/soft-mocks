@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.3.2
+
+There are next changes:
+
+- Update php-parser to a recent version
+
 ## v3.3.1
 
 There are next changes:
