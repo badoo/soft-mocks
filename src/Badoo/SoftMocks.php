@@ -496,6 +496,10 @@ class SoftMocks
     private static $base_paths = [];
     private static $prepare_for_rewrite_callback;
     private static $lock_file_path;
+    private static $backtrace_ignored_method_calls = [
+        [\PHPUnit\Framework\TestCase::class, 'run'],
+        [\PHPUnit\Framework\TestCase::class, 'runTest'],
+    ];
 
     protected static function getEnvironment($key)
     {
@@ -928,12 +932,26 @@ class SoftMocks
                         }
                     }
 
+                    foreach (self::$backtrace_ignored_method_calls as list($ignoreClass, $ignoreMethod)) {
+                        if (
+                            strpos($str, " {$ignoreClass}->{$ignoreMethod}(") !== false ||
+                            strpos($str, " {$ignoreClass}::{$ignoreMethod}(") !== false
+                        ) {
+                            return false;
+                        }
+                    }
+
                     return strpos($str, 'PHPUnit_Framework_ExpectationFailedException') === false
                         && strpos($str, '{main}') === false
                         && strpos($str, basename(__FILE__)) === false;
                 }
             )
         ) . "\n";
+    }
+
+    public static function backtraceIgnoreMethodCall($class, $methodName)
+    {
+        self::$backtrace_ignored_method_calls[] = [$class, $methodName];
     }
 
     public static function replaceFilenameRaw($file)

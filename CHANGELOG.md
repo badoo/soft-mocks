@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.4.0
+
+There are next changes:
+
+- Ignore some calls in backtrace to fix navigation in PHPStorm, ignore PHPUnit calls by default
+
 ## v3.3.2
 
 There are next changes:
