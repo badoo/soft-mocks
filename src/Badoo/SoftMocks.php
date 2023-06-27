@@ -2158,7 +2158,7 @@ class SoftMocks
      */
     private static function generateCode($args, array $params)
     {
-        $args = trim($args);
+        $args = trim($args ?? '');
         if (!$args) return '';
 
         $codeArgs = '';
