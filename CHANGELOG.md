@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.5.0
+
+There are next changes:
+
+- Optimize isMocked and getClassConst
+
 ## v3.4.0
 
 There are next changes:
