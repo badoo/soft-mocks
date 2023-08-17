@@ -457,6 +457,7 @@ class SoftMocks
     public static $internal_functions = [];
 
     private static $mocks = [];
+    public static $mocks_by_name = [];
 
     private static $func_mocks = [];
     private static $internal_func_mocks = []; // internal mocks that cannot be changed
@@ -467,6 +468,7 @@ class SoftMocks
     private static $lang_construct_mocks = [];
     private static $constant_mocks = [];
     private static $removed_constants = [];
+    public static $class_const_mocks_by_name = [];
 
     // variables for pause/resume feature
     private static $paused_mocks = [];
@@ -1767,6 +1769,8 @@ class SoftMocks
         self::restoreAllActual();
         self::restoreAllPaused();
         self::$paused = false;
+        self::$mocks_by_name = [];
+        self::$class_const_mocks_by_name = [];
     }
 
     private static function restoreAllActual()
@@ -1889,6 +1893,7 @@ class SoftMocks
         ];
         if (self::$paused) self::$paused_mocks[$class][$method] = $mock_array;
         else self::$mocks[$class][$method] = $mock_array;
+        self::$mocks_by_name[$method][$class] = true;
     }
 
     public static function restoreMethod($class, $method)
@@ -1901,8 +1906,13 @@ class SoftMocks
                 self::debug("Restore also method $class::$method");
             }
             unset(self::$mocks[self::$mocks[$class][$method]['decl_class']][$method]);
+            unset(self::$mocks_by_name[$method][$class]);
         }
         unset(self::$mocks[$class][$method]);
+        unset(self::$mocks_by_name[$method][$class]);
+        if ((self::$mocks_by_name[$method] ?? null) === []) {
+            unset(self::$mocks_by_name[$method]);
+        }
     }
 
     public static function restoreExit()
@@ -1978,18 +1988,28 @@ class SoftMocks
 
         if (self::$paused) self::$paused_constant_mocks[$constantName] = $value;
         else self::$constant_mocks[$constantName] = $value;
+
+        $constantBaseName = array_slice(explode('::', $constantName), -1)[0];
+        self::$class_const_mocks_by_name[$constantBaseName][$constantName] = true;
     }
 
     public static function restoreConstant($constantName)
     {
         unset(self::$constant_mocks[$constantName]);
         unset(self::$removed_constants[$constantName]);
+
+        $constantBaseName = array_slice(explode('::', $constantName), -1)[0];
+        unset(self::$class_const_mocks_by_name[$constantBaseName][$constantName]);
+        if ((self::$class_const_mocks_by_name[$constantBaseName] ?? null) === []) {
+            unset(self::$class_const_mocks_by_name[$constantBaseName]);
+        }
     }
 
     public static function restoreAllConstants()
     {
         self::restoreAllConstantsActual();
         self::restoreAllConstantsPaused();
+        self::$class_const_mocks_by_name = [];
     }
 
     private static function restoreAllConstantsActual()
@@ -2009,6 +2029,9 @@ class SoftMocks
         unset(self::$constant_mocks[$constantName], self::$paused_constant_mocks[$constantName]);
         if (self::$paused) self::$paused_removed_constants[$constantName] = true;
         else self::$removed_constants[$constantName] = true;
+
+        $constantBaseName = array_slice(explode('::', $constantName), -1)[0];
+        self::$class_const_mocks_by_name[$constantBaseName][$constantName] = true;
     }
 
     // there can be a situation when usage of static is not suitable for mocking so we need additional checks here
@@ -2135,8 +2158,10 @@ class SoftMocks
 
         try {
             $Rm = new \ReflectionMethod($class, $method);
-            if ($Rm->isUserDefined()) {
-                self::$temp_disable = true; // we can only mock and check for mocks for user defined methods
+            if ($Rm->isUserDefined()) { // we can only mock and check for mocks for user defined methods
+                if (isset(self::$mocks_by_name[$method])) { // don't set temp_disable if isMocked won't be called
+                    self::$temp_disable = true;
+                }
             }
         } catch (\ReflectionException $e) {
             // do nothing, it is ok in this case because it means that mock disabling is not needed
@@ -2711,20 +2736,38 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         }
         $body_stmts[] = new \PhpParser\Node\Name("/** @codeCoverageIgnore */");
 
-        $MockCheck = new \PhpParser\Node\Stmt\If_(
-            new \PhpParser\Node\Expr\BinaryOp\NotIdentical(
-                new \PhpParser\Node\Expr\ConstFetch(
-                    new \PhpParser\Node\Name("false")
-                ),
-                new \PhpParser\Node\Expr\Assign(
-                    new \PhpParser\Node\Expr\Variable("__softmocksvariableforcode"),
-                    new \PhpParser\Node\Expr\StaticCall(
-                        new \PhpParser\Node\Name("\\" . SoftMocks::class),
-                        $this->has_yield ? "isGeneratorMocked" : "isMocked",
-                        $args
-                    )
-                )
+        $mockCheckCondition = new \PhpParser\Node\Expr\BinaryOp\NotIdentical(
+            new \PhpParser\Node\Expr\ConstFetch(
+                new \PhpParser\Node\Name("false")
             ),
+            new \PhpParser\Node\Expr\Assign(
+                new \PhpParser\Node\Expr\Variable("__softmocksvariableforcode"),
+                new \PhpParser\Node\Expr\StaticCall(
+                    new \PhpParser\Node\Name("\\" . SoftMocks::class),
+                    $this->has_yield ? "isGeneratorMocked" : "isMocked",
+                    $args
+                )
+            )
+        );
+        if (!$this->has_yield) {
+            $mockCheckCondition = new \PhpParser\Node\Expr\BinaryOp\BooleanAnd(
+                new \PhpParser\Node\Expr\Isset_(
+                    [
+                        new \PhpParser\Node\Expr\ArrayDimFetch(
+                            new \PhpParser\Node\Expr\StaticPropertyFetch(
+                                new \PhpParser\Node\Name("\\" . SoftMocks::class),
+                                'mocks_by_name'
+                            ),
+                            $function
+                        )
+                    ]
+                ),
+                $mockCheckCondition
+            );
+        }
+
+        $MockCheck = new \PhpParser\Node\Stmt\If_(
+            $mockCheckCondition,
             [
                 'stmts' => $body_stmts,
             ]
@@ -2858,6 +2901,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
                 self::nodeArgsToArray($Node->args, $arg_is_ref),
             ]
         );
+
         $NewNode->setAttribute('startLine', $Node->getStartLine());
         $NewNode->setAttribute('endLine', $Node->getStartLine());
 
@@ -2910,10 +2954,26 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             $params[] = new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('null')));
         }
 
-        $NewNode = new \PhpParser\Node\Expr\StaticCall(
-            new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            "getClassConst",
-            $params
+        $existsMockedConstForNameCondition = new \PhpParser\Node\Expr\Isset_(
+            [
+                new \PhpParser\Node\Expr\ArrayDimFetch(
+                    new \PhpParser\Node\Expr\StaticPropertyFetch(
+                        new \PhpParser\Node\Name("\\" . SoftMocks::class),
+                        'class_const_mocks_by_name'
+                    ),
+                    new \PhpParser\Node\Scalar\String_($Node->name)
+                )
+            ]
+        );
+
+        $NewNode = new \PhpParser\Node\Expr\Ternary(
+            $existsMockedConstForNameCondition,
+            new \PhpParser\Node\Expr\StaticCall(
+                new \PhpParser\Node\Name("\\" . SoftMocks::class),
+                "getClassConst",
+                $params
+            ),
+            $Node
         );
 
         $NewNode->setAttribute('startLine', $Node->getLine());
