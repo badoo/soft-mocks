@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.5.1
+
+There are next changes:
+
+- Use correct namespace in callFunction
+
 ## v3.5.0
 
 There are next changes:

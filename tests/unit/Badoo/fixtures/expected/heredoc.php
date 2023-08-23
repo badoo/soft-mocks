@@ -25,4 +25,4 @@ Test
 Description;}
 
 
-\Badoo\SoftMocks::callFunction(__NAMESPACE__, 'var_dump', ['test']);
+\Badoo\SoftMocks::callFunction('', 'var_dump', ['test']);

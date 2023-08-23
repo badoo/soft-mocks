@@ -2892,11 +2892,16 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             $name = $Node->name;
         }
 
+        $namespaceArg = self::getNamespaceArg();
+        if ($Node->name instanceof \PhpParser\Node\Name\FullyQualified) {
+            $namespaceArg = new \PhpParser\Node\Arg(new \PhpParser\Node\Scalar\String_(''));
+        }
+
         $NewNode = new \PhpParser\Node\Expr\StaticCall(
             new \PhpParser\Node\Name("\\" . SoftMocks::class),
             $Node->name instanceof \PhpParser\Node\Name ? 'callFunction' : 'call',
             [
-                self::getNamespaceArg(),
+                $namespaceArg,
                 $name,
                 self::nodeArgsToArray($Node->args, $arg_is_ref),
             ]
