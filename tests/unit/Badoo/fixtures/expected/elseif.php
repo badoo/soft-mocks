@@ -3,12 +3,12 @@
 function foo(){
     if ($foo) {
         return $bar;} 
-        elseif (\Badoo\SoftMocks::callFunction(__NAMESPACE__, 'bar', [])) {
-            \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'baz', []);}
-        elseif (\Badoo\SoftMocks::callFunction(__NAMESPACE__, 'bar2', [])) {
-            \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'baz2', []);} else {
+        elseif (\Badoo\SoftMocks::callFunction('', 'bar', [])) {
+            \Badoo\SoftMocks::callFunction('', 'baz', []);}
+        elseif (\Badoo\SoftMocks::callFunction('', 'bar2', [])) {
+            \Badoo\SoftMocks::callFunction('', 'baz2', []);} else {
         
-        \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'baz3', []);}
+        \Badoo\SoftMocks::callFunction('', 'baz3', []);}
     
     
     return \null;}

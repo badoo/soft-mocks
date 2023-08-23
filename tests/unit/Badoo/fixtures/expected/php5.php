@@ -79,7 +79,7 @@ $array = [
     \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'replaceSomething', ['string']),
     3,
 ];
-for ($i = 0; $i < \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'count', [$array]); $i++) {
+for ($i = 0; $i < \Badoo\SoftMocks::callFunction('', 'count', [$array]); $i++) {
     $value = $array[$i];}
 
 
