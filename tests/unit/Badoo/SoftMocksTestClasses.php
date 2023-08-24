@@ -355,6 +355,11 @@ class ClassToTestPauseResume
     }
 }
 
+function functionToTestRestore()
+{
+    return 1;
+}
+
 function functionToTestPauseResume()
 {
     return 1;

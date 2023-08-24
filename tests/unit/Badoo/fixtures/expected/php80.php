@@ -31,13 +31,13 @@ function nullsafeUsagee(){
         return \null;}
     
     
-    return \Badoo\SoftMocks::callFunction('', 'returnNull', [])?->test();}
+    return (isset(\Badoo\SoftMocks::$func_mocks_by_name['returnNull']) ? \Badoo\SoftMocks::callFunction('', 'returnNull', []) : \returnNull())?->test();}
 
 
 function multipleArguments($arg1, ?int $arg2 = \null, int $arg3 = 1) : void{}
 
 
-\Badoo\SoftMocks::callFunction('', 'multipleArguments', ['arg1', 10]);
+isset(\Badoo\SoftMocks::$func_mocks_by_name['multipleArguments']) ? \Badoo\SoftMocks::callFunction('', 'multipleArguments', ['arg1', 10]) : \multipleArguments(arg1: 'arg1', arg3: 10);
 
 #[\Attribute]class TestAttribute{
     
