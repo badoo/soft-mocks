@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.5.2
+
+There are next changes:
+
+- Support for rewriting calls with named arguments
+
 ## v3.5.1
 
 There are next changes:
