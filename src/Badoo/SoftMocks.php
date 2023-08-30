@@ -8,6 +8,8 @@
 
 namespace Badoo;
 
+use PhpParser\Node\Scalar\String_;
+
 class SoftMocksFunctionCreator
 {
     public static function run($obj, $class, $params, $mocks)
@@ -2846,9 +2848,14 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
                     [$ArgsArray, $unpacked_arg]
                 );
             }
+
+            $arg_name = null;
+            if (!empty($arg->name)) {
+                $arg_name = new String_($arg->name->name);
+            }
             $arr_args[] = new \PhpParser\Node\Expr\ArrayItem(
                 $arg->value,
-                null,
+                $arg_name,
                 $is_ref
             );
 

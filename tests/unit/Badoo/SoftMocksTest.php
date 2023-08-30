@@ -2761,7 +2761,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             static::markTestSkippedForPHPVersionBelow('7.4.0');
         }
 
-        if ($filename === 'php80.php') {
+        if ($filename === 'php80.php' || $filename === 'named_arguments.php') {
             static::markTestSkippedForPHPVersionBelow('8.0.0');
         }
 
