@@ -1398,7 +1398,7 @@ class SoftMocks
             return is_callable($callable);
         }
 
-        if (is_scalar($callable) && isset(self::$func_mocks[$callable])) {
+        if (is_string($callable) && isset(self::$func_mocks[$callable])) {
             return true;
         }
 
