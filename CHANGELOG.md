@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.5.3
+
+There are next changes:
+
+- Fix SoftMocks::isCallable triggering E_DEPRECATED for floats
+
 ## v3.5.2
 
 There are next changes:
