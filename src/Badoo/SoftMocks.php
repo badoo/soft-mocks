@@ -724,7 +724,7 @@ class SoftMocks
             return;
         }
         throw new \RuntimeException(
-            "Can't find nikic/php-parser version in installed packages for for right rewritten files cache"
+            "Can't find nikic/php-parser version in installed packages for right rewritten files cache"
         );
     }
 
