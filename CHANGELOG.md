@@ -1,5 +1,99 @@
 # SoftMocks ChangeLog
 
+## v3.5.2
+
+There are next changes:
+
+- Support for rewriting calls with named arguments
+
+## v3.5.1
+
+There are next changes:
+
+- Use correct namespace in callFunction
+
+## v3.5.0
+
+There are next changes:
+
+- Optimize isMocked and getClassConst
+
+## v3.4.0
+
+There are next changes:
+
+- Ignore some calls in backtrace to fix navigation in PHPStorm, ignore PHPUnit calls by default
+
+## v3.3.2
+
+There are next changes:
+
+- Update php-parser to a recent version
+
+## v3.3.1
+
+There are next changes:
+
+- Fixed lines preserving for heredec and elseif
+
+## v3.3.0
+
+There are next changes:
+
+- PHP 8.0 support: added support for non-capturing catches
+- PHP 8.0 support: added attributes printing inside the mocked files
+
+## v3.2.0
+
+There are next changes:
+
+- Upgrade phpunit dev dependency to be able use PHP 8.0
+
+## v3.1.7
+
+There are next changes:
+
+- Fixed base path cutoff
+
+## v3.1.6
+
+There are next changes:
+
+- Removed mb_orig_* helpers, as well as their usages
+
+## v3.1.5
+
+There are next changes:
+
+- Fixed issue with creating extra empty lines
+- ext-mbstring is now required for processing
+
+## v3.1.4
+
+There are next changes:
+
+- Removed usages of mbstring-overloaded functions
+
+## v3.1.3
+
+There are next changes:
+
+- Added support of composer 2
+
+## v3.1.2
+
+There are next changes:
+
+- Added support for PHPUnit 8.4.3
+- Fixed unexpected multiline formatting when rewriting function calls
+- Fixed handling string-encapsulated function calls
+- Added support for fetching constants from imported namespaces, e.g.
+```php
+use Namespace;
+
+echo Namespace\CONSTANT_NAME;
+```
+
 ## v3.1.1
 
 There are next changes:

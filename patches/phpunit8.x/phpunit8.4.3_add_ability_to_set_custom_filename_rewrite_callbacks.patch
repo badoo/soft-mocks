@@ -1,26 +1,14 @@
-From 9ba68404ba02f50412f0838829d32daf3751c660 Mon Sep 17 00:00:00 2001
-From: Yuriy Nasretdinov <y.nasretdinov@corp.badoo.com>
-Date: Mon, 14 Mar 2016 19:11:53 +0300
-Subject: [PATCH 1/2] Add ability to set custom filename rewrite callbacks
-
----
- src/Framework/TestSuite.php            |  7 ++++++-
- src/Runner/StandardTestSuiteLoader.php | 11 ++++++++++-
- src/Util/Fileloader.php                | 36 +++++++++++++++++++++++++++++++++-
- src/Util/Filter.php                    | 15 ++++++++++++++
- 4 files changed, 66 insertions(+), 3 deletions(-)
-
 diff --git a/src/Framework/TestSuite.php b/src/Framework/TestSuite.php
-index dbcc801..93f1650 100644
+index d1bfe7b51..78735be66 100644
 --- a/src/Framework/TestSuite.php
 +++ b/src/Framework/TestSuite.php
-@@ -347,8 +347,13 @@ public function addTestFile($filename)
-         foreach ($this->foundClasses as $i => $className) {
-             if (\preg_match($shortnameRegEx, $className)) {
-                 $class = new ReflectionClass($className);
-+                $classFile = $class->getFileName();
- 
+@@ -387,7 +387,13 @@ public function addTestFile(string $filename): void
+                 }
+                 // @codeCoverageIgnoreEnd
+
 -                if ($class->getFileName() == $filename) {
++                $classFile = $class->getFileName();
++
 +                if ($restoreCallback = Fileloader::getFilenameRestoreCallback()) {
 +                    $classFile = $restoreCallback($classFile);
 +                }
@@ -28,15 +16,15 @@ index dbcc801..93f1650 100644
 +                if ($classFile == $filename) {
                      $newClasses = [$className];
                      unset($this->foundClasses[$i]);
- 
+
 diff --git a/src/Runner/StandardTestSuiteLoader.php b/src/Runner/StandardTestSuiteLoader.php
-index 3098d93..aa11ecc 100644
+index e7651a4b5..c61cc2642 100644
 --- a/src/Runner/StandardTestSuiteLoader.php
 +++ b/src/Runner/StandardTestSuiteLoader.php
-@@ -68,6 +68,10 @@ public function load($suiteClassName, $suiteClassFile = '')
-                 $class     = new ReflectionClass($loadedClass);
+@@ -86,6 +86,10 @@ public function load(string $suiteClassName, string $suiteClassFile = ''): \Refl
+
                  $classFile = $class->getFileName();
- 
+
 +                if ($restoreCallback = Fileloader::getFilenameRestoreCallback()) {
 +                    $classFile = $restoreCallback($classFile);
 +                }
@@ -44,28 +32,28 @@ index 3098d93..aa11ecc 100644
                  if ($class->isSubclassOf($testCaseClass) && !$class->isAbstract()) {
                      $suiteClassName = $loadedClass;
                      $testCaseClass  = $loadedClass;
-@@ -93,8 +97,13 @@ public function load($suiteClassName, $suiteClassFile = '')
- 
-         if (\class_exists($suiteClassName, false)) {
-             $class = new ReflectionClass($suiteClassName);
+@@ -132,7 +136,13 @@ public function load(string $suiteClassName, string $suiteClassFile = ''): \Refl
+             }
+             // @codeCoverageIgnoreEnd
+
+-            if ($class->getFileName() == \realpath($suiteClassFile)) {
 +            $classFile = $class->getFileName();
 +
 +            if ($restoreCallback = Fileloader::getFilenameRestoreCallback()) {
 +                $classFile = $restoreCallback($classFile);
 +            }
- 
--            if ($class->getFileName() == \realpath($suiteClassFile)) {
++
 +            if ($classFile == \realpath($suiteClassFile)) {
                  return $class;
              }
          }
-diff --git a/src/Util/Fileloader.php b/src/Util/Fileloader.php
-index 5822036..845219b 100644
---- a/src/Util/Fileloader.php
-+++ b/src/Util/Fileloader.php
-@@ -16,6 +16,35 @@
+diff --git a/src/Util/FileLoader.php b/src/Util/FileLoader.php
+index 2c5f7ca99..9ffc0c08e 100644
+--- a/src/Util/FileLoader.php
++++ b/src/Util/FileLoader.php
+@@ -16,6 +16,40 @@
   */
- class Fileloader
+ final class FileLoader
  {
 +    /** @var Callable */
 +    private static $filename_rewrite_callback;
@@ -80,6 +68,11 @@ index 5822036..845219b 100644
 +    public static function setFilenameRewriteCallback(Callable $callback)
 +    {
 +        self::$filename_rewrite_callback = $callback;
++    }
++
++    public static function getFilenameRewriteCallback()
++    {
++        return self::$filename_rewrite_callback;
 +    }
 +
 +    /**
@@ -97,12 +90,12 @@ index 5822036..845219b 100644
 +    }
 +
      /**
-      * Checks if a PHP sourcefile is readable.
-      * The sourcefile is loaded through the load() method.
-@@ -61,7 +90,12 @@ public static function load($filename)
+      * Checks if a PHP sourcecode file is readable. The sourcecode file is loaded through the load() method.
+      *
+@@ -56,7 +90,12 @@ public static function load(string $filename): void
      {
          $oldVariableNames = \array_keys(\get_defined_vars());
- 
+
 -        include_once $filename;
 +        if ($cb = self::$filename_rewrite_callback) {
 +            $new_filename = $cb($filename);
@@ -110,16 +103,16 @@ index 5822036..845219b 100644
 +        } else {
 +            include_once $filename;
 +        }
- 
+
          $newVariables     = \get_defined_vars();
-         $newVariableNames = \array_diff(
+
 diff --git a/src/Util/Filter.php b/src/Util/Filter.php
-index f93c962..8deb87b 100644
+index 7fd805049..bbe3e22e9 100644
 --- a/src/Util/Filter.php
 +++ b/src/Util/Filter.php
-@@ -17,6 +17,17 @@
+@@ -17,11 +17,26 @@
   */
- class Filter
+ final class Filter
  {
 +    private static $custom_stacktrace_callback;
 +
@@ -133,14 +126,12 @@ index f93c962..8deb87b 100644
 +    }
 +
      /**
-      * Filters stack frames from PHPUnit classes.
-      *
-@@ -27,6 +38,10 @@ class Filter
+      * @throws Exception
       */
-     public static function getFilteredStacktrace($e, $asString = true)
+     public static function getFilteredStacktrace(\Throwable $t): string
      {
 +        if ($stackTraceCb = self::$custom_stacktrace_callback) {
-+            return $stackTraceCb($e, $asString);
++            return $stackTraceCb($t);
 +        }
 +
          $prefix = false;

@@ -23,6 +23,3 @@ index 845219b..2bb8a0c 100644
      /**
       * Provide callback for restoring rewritten test file names
       * @param callable $callback (rewritten_filename => source_filename)
--- 
-2.7.4
-

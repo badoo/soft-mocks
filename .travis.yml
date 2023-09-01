@@ -11,14 +11,22 @@ php:
   - 7.0
 
 env:
-  - PHPUNIT_VERSION=^8.4.0
-  - PHPUNIT_VERSION=^7.5.0
-  - PHPUNIT_VERSION=^6.5.0
-  - PHPUNIT_VERSION=^5.7.0
-  - PHPUNIT_VERSION=^4.8.0
+  global:
+    - XDEBUG_MODE=coverage
+  jobs:
+    - PHPUNIT_VERSION=8.4.*
+    - PHPUNIT_VERSION=8.4.* COMPOSER_VERSION=1.10.22
+    - PHPUNIT_VERSION=^7.5.0
+    - PHPUNIT_VERSION=^7.5.0 COMPOSER_VERSION=1.10.22
+    - PHPUNIT_VERSION=^6.5.0
+    - PHPUNIT_VERSION=^6.5.0 COMPOSER_VERSION=1.10.22
+    - PHPUNIT_VERSION=^5.7.0
+    - PHPUNIT_VERSION=^5.7.0 COMPOSER_VERSION=1.10.22
+    - PHPUNIT_VERSION=^4.8.0
+    - PHPUNIT_VERSION=^4.8.0 COMPOSER_VERSION=1.10.22
 
 before_script:
-  - composer self-update 1.10.17
+  - composer self-update ${COMPOSER_VERSION}
   - composer require --dev --no-update "phpunit/phpunit":"${PHPUNIT_VERSION}"
   - composer install
   # dirty hack for compatible with old php versions
@@ -31,7 +39,7 @@ before_script:
   - vendor/bin/phpunit --version
 
 script:
-  - vendor/bin/phpunit --verbose --colors --coverage-clover=coverage.clover
+  - vendor/bin/phpunit --verbose --colors -dxdebug.mode=coverage --coverage-clover=coverage.clover
   - if [ -d /tmp/mocks_changed/ ]; then echo "Changed path shouldn't be found"; exit 1; else echo "Changed path not found"; fi;
   - SOFT_MOCKS_CACHE_PATH=/tmp/mocks_changed/ vendor/bin/phpunit --verbose --filter='testRedefineMethod'
   - if [ -d /tmp/mocks_changed/ ]; then echo "Changed path found"; else echo "Changed path should be found"; exit 1; fi;
@@ -46,14 +54,28 @@ jobs:
     - php: 7.0
       env: PHPUNIT_VERSION=^7.5.0
     - php: 7.0
-      env: PHPUNIT_VERSION=^8.4.0
+      env: PHPUNIT_VERSION=^7.5.0 COMPOSER_VERSION=1.10.22
+    - php: 7.0
+      env: PHPUNIT_VERSION=8.4.*
+    - php: 7.0
+      env: PHPUNIT_VERSION=8.4.* COMPOSER_VERSION=1.10.22
     - php: 7.1
       env: PHPUNIT_VERSION=^4.8.0
     - php: 7.1
-      env: PHPUNIT_VERSION=^8.4.0
+      env: PHPUNIT_VERSION=^4.8.0 COMPOSER_VERSION=1.10.22
+    - php: 7.1
+      env: PHPUNIT_VERSION=8.4.*
+    - php: 7.1
+      env: PHPUNIT_VERSION=8.4.* COMPOSER_VERSION=1.10.22
     - php: 7.2
       env: PHPUNIT_VERSION=^4.8.0
+    - php: 7.2
+      env: PHPUNIT_VERSION=^4.8.0 COMPOSER_VERSION=1.10.22
     - php: 7.3
       env: PHPUNIT_VERSION=^4.8.0
-    - php: 7.4snapshot
+    - php: 7.3
+      env: PHPUNIT_VERSION=^4.8.0 COMPOSER_VERSION=1.10.22
+    - php: 7.4
       env: PHPUNIT_VERSION=^4.8.0
+    - php: 7.4
+      env: PHPUNIT_VERSION=^4.8.0 COMPOSER_VERSION=1.10.22

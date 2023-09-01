@@ -7,6 +7,8 @@
  */
 namespace Badoo\SoftMock\Tests;
 
+use Badoo\SoftMocks;
+
 class SoftMocksTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp() : void
@@ -24,6 +26,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
     {
         if (version_compare(phpversion(), $php_version, '<')) {
             static::markTestSkipped('You PHP version do not support this, you need need at least PHP ' . $php_version);
+        }
+    }
+
+    public static function markTestSkippedForPHPVersionAbove($php_version)
+    {
+        if (version_compare(phpversion(), $php_version, '>')) {
+            static::markTestSkipped('You PHP version do not support this, you need need PHP lower than ' . $php_version);
         }
     }
 
@@ -73,7 +82,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertEquals([1, 2, 3], $object->getConstructorParams());
     }
 
-    public function testRedefineMethod()
+    public function testRedefineAndRestoreMethod()
     {
         \Badoo\SoftMocks::redefineMethod(
             BaseInheritanceTestClass::class,
@@ -83,6 +92,18 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         );
         $a = new BaseInheritanceTestClass();
         static::assertEquals(43, $a->doSomething());
+        static::assertEquals(
+            [
+                'doSomething' => [
+                    BaseInheritanceTestClass::class => true
+                ]
+            ],
+            \Badoo\SoftMocks::$mocks_by_name
+        );
+
+        \Badoo\SoftMocks::restoreMethod(BaseInheritanceTestClass::class, 'doSomething');
+        static::assertEquals(42, $a->doSomething());
+        static::assertEquals([], \Badoo\SoftMocks::$mocks_by_name);
     }
 
     public function testRedefineMethodWithInheritedClasses()
@@ -224,13 +245,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBaseTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -239,13 +260,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBaseTestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -254,13 +275,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -269,13 +290,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -284,13 +305,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -299,13 +320,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -314,13 +335,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -687,11 +708,33 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::class . '::VALUE',
             50
         );
+        static::assertEquals(
+            [
+                'VALUE' => [
+                    ConstantRedeclareBaseTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareFirstTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareSecondTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareThirdTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareForthTestClass::class . '::VALUE' => true,
+                ]
+            ],
+            SoftMocks::$class_const_mocks_by_name
+        );
 
         \Badoo\SoftMocks::removeConstant(ConstantRedeclareFirstTestClass::class . '::VALUE');
         \Badoo\SoftMocks::restoreConstant(ConstantRedeclareSecondTestClass::class . '::VALUE');
         \Badoo\SoftMocks::removeConstant(ConstantRedeclareThirdTestClass::class . '::VALUE');
         \Badoo\SoftMocks::restoreConstant(ConstantRedeclareForthTestClass::class . '::VALUE');
+        static::assertEquals(
+            [
+                'VALUE' => [
+                    ConstantRedeclareBaseTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareFirstTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareThirdTestClass::class . '::VALUE' => true,
+                ]
+            ],
+            SoftMocks::$class_const_mocks_by_name
+        );
 
         static::assertSame(10, ConstantRedeclareBaseTestClass::getBaseSelfValue());
         static::assertSame(10, ConstantRedeclareBaseTestClass::getBaseStaticValue());
@@ -743,18 +786,27 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
     {
         \Badoo\SoftMocks::removeConstant(ConstantRedeclareFirstTestClass::class . '::VALUE');
         \Badoo\SoftMocks::removeConstant(ConstantRedeclareThirdTestClass::class . '::VALUE');
+        static::assertEquals(
+            [
+                'VALUE' => [
+                    ConstantRedeclareFirstTestClass::class . '::VALUE' => true,
+                    ConstantRedeclareThirdTestClass::class . '::VALUE' => true,
+                ]
+            ],
+            SoftMocks::$class_const_mocks_by_name
+        );
 
         try {
             ConstantRedeclareBaseTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -762,13 +814,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBaseTestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -777,13 +829,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -791,13 +843,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -805,13 +857,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -819,13 +871,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -833,13 +885,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstTestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -848,13 +900,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -862,13 +914,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -876,13 +928,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -890,13 +942,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -904,13 +956,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -918,13 +970,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getSecondParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -932,13 +984,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getSecondSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -946,13 +998,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondTestClass::getSecondStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -961,13 +1013,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -975,13 +1027,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -989,13 +1041,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1003,13 +1055,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1017,13 +1069,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1031,13 +1083,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getSecondParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1045,13 +1097,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getSecondSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1059,13 +1111,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getSecondStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1073,13 +1125,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getThirdParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1087,13 +1139,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getThirdSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1101,13 +1153,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdTestClass::getThirdStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1116,13 +1168,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1130,13 +1182,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1144,13 +1196,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBaseTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBaseTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1158,13 +1210,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1172,13 +1224,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1186,13 +1238,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getSecondParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1200,13 +1252,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getSecondSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1214,13 +1266,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getSecondStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1228,13 +1280,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getThirdParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1242,13 +1294,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getThirdSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1256,13 +1308,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getThirdStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1270,13 +1322,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getForthParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1284,13 +1336,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getForthSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1298,13 +1350,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthTestClass::getForthStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         } catch (\RuntimeException $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthTestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthTestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1372,18 +1424,20 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     public function testDescendantBad()
     {
-        $exception_class = \Error::class;
-        if (PHP_VERSION_ID < 70100) {
-            $exception_class = \RuntimeException::class;
+        try {
+            DescendantBaseTestClass::getDescendant();
+            static::fail("Exception wasn't thrown");
+        } catch (\Error $Error) {
+            static::assertRegExp(
+                "/^Undefined (class )?constant Badoo\\\\SoftMock\\\\Tests\\\\DescendantBaseTestClass::DESCENDANT/",
+                $Error->getMessage()
+            );
+        } catch (\RuntimeException $Error) {
+            static::assertRegExp(
+                "/^Undefined (class )?constant Badoo\\\\SoftMock\\\\Tests\\\\DescendantBaseTestClass::DESCENDANT/",
+                $Error->getMessage()
+            );
         }
-        if (\method_exists($this, 'expectException')) {
-            $this->expectException($exception_class);
-            $this->expectExceptionMessage('Undefined class constant');
-        } else {
-            // for phpunit 4.x
-            $this->setExpectedException($exception_class, 'Undefined class constant');
-        }
-        DescendantBaseTestClass::getDescendant();
     }
 
     public function dataProviderResolveFile()
@@ -1520,7 +1574,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertEquals(1, $Object->getA());
     }
 
-    public function testAnonymous()
+    public function testAnonymousClass()
     {
         require_once __DIR__ . '/AnonymousTestClass.php';
         static::assertEquals(1, AnonymousTestClass::SOMETHING);
@@ -1769,8 +1823,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBasePHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1779,8 +1834,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBasePHP71TestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1789,8 +1844,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1799,8 +1854,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1809,8 +1864,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1819,8 +1874,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -1829,8 +1884,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2286,8 +2341,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBasePHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2295,8 +2350,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareBasePHP71TestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2305,8 +2360,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2314,8 +2369,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2323,8 +2378,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2332,8 +2387,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2341,8 +2396,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareFirstPHP71TestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2351,8 +2406,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2360,8 +2415,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2369,8 +2424,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2378,8 +2433,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2387,8 +2442,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2396,8 +2451,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getSecondParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2405,8 +2460,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getSecondSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2414,8 +2469,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareSecondPHP71TestClass::getSecondStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2424,8 +2479,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2433,8 +2488,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2442,8 +2497,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2451,8 +2506,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2460,8 +2515,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2469,8 +2524,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getSecondParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2478,8 +2533,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getSecondSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2487,8 +2542,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getSecondStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2496,8 +2551,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getThirdParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2505,8 +2560,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getThirdSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2514,8 +2569,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareThirdPHP71TestClass::getThirdStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2524,8 +2579,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getBaseSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2533,8 +2588,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getBaseStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2542,8 +2597,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getFirstParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareBasePHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareBasePHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2551,8 +2606,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getFirstSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2560,8 +2615,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getFirstStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2569,8 +2624,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getSecondParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareFirstPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareFirstPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2578,8 +2633,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getSecondSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2587,8 +2642,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getSecondStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2596,8 +2651,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getThirdParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareSecondPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareSecondPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2605,8 +2660,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getThirdSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2614,8 +2669,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getThirdStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2623,8 +2678,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getForthParentValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareThirdPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareThirdPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2632,8 +2687,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getForthSelfValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2641,8 +2696,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             ConstantRedeclareForthPHP71TestClass::getForthStaticValue();
             static::fail("Exception wasn't thrown");
         } catch (\Error $Error) {
-            static::assertSame(
-                "Undefined class constant 'Badoo\SoftMock\Tests\ConstantRedeclareForthPHP71TestClass::VALUE'",
+            static::assertRegExp(
+                "/^Undefined (class )?constant '?Badoo\\\\SoftMock\\\\Tests\\\\ConstantRedeclareForthPHP71TestClass::VALUE'?$/",
                 $Error->getMessage()
             );
         }
@@ -2706,6 +2761,14 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             static::markTestSkippedForPHPVersionBelow('7.4.0');
         }
 
+        if ($filename === 'php80.php' || $filename === 'named_arguments.php') {
+            static::markTestSkippedForPHPVersionBelow('8.0.0');
+        }
+
+        if ($filename === 'php81.php') {
+            static::markTestSkippedForPHPVersionBelow('8.1.0');
+        }
+
         $result = \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/original/' . $filename);
         $this->assertNotFalse($result, "Rewrite failed");
 
@@ -2739,7 +2802,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Undefined class constant');
+        $this->expectExceptionMessageMatches('/^Undefined (class )?constant/');
 
         require_once __DIR__ . '/WithRestrictedConstantsPHP71TestClass.php';
 
@@ -2813,9 +2876,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         self::assertSame(2, ClassWithCallViaVariable::callAViaVariable());
     }
 
-    public function providerInvalid()
+    public function providerInvalidFatal()
     {
-        $files = glob(__DIR__ . '/fixtures/invalid/*.phpi');
+        $files = glob(__DIR__ . '/fixtures/invalid_fatal/*.phpi');
         $result = array_map(
             function ($filename) {
                 return [basename($filename)];
@@ -2826,13 +2889,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider providerInvalid
+     * @dataProvider providerInvalidFatal
      *
      * @param $filename
      */
     public function testParseErrors($filename)
     {
-        $filename = __DIR__ . '/fixtures/invalid/' . $filename;
+        $filename = __DIR__ . '/fixtures/invalid_fatal/' . $filename;
 
         $exception_message = "File: {$filename}, message: File: {$filename}";
         if (\method_exists($this, 'expectExceptionMessage')) {
@@ -2844,6 +2907,60 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         }
 
         \Badoo\SoftMocks::rewrite($filename);
+    }
+
+    public function testInvalidRedefine()
+    {
+        self::markTestSkippedForPHPVersionAbove('8.0');
+
+        $exception_message = "Declaration of Badoo\SoftMock\Tests\Fixtures\InvalidRedefine::f() should be compatible with Badoo\SoftMock\Tests\ParentMismatchBaseTestClass::f(\$c)";
+
+        if (class_exists('\PHPUnit\Framework\Error\Warning')) {
+            $warning_class = \PHPUnit\Framework\Error\Warning::class;
+        } else {
+            $warning_class = \PHPUnit_Framework_Error_Warning::class;
+        }
+        
+        if (\method_exists($this, 'expectExceptionMessage')) {
+            $this->expectException($warning_class);
+            $this->expectExceptionMessage($exception_message);
+        } else {
+            // for phpunit 4.x
+            $this->setExpectedException($warning_class, $exception_message);
+        }
+
+        require_once \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/invalid_warning/autoload.php');
+        \Badoo\SoftMocks::getClassConst(
+            'Badoo\SoftMock\Tests\Fixtures\InvalidRedefine',
+            'TEST',
+            'Badoo\SoftMock\Tests\Fixtures\InvalidRedefine'
+        );
+    }
+
+    public function testExceptionInBody()
+    {
+        $exception_message = "real exception";
+        if (\method_exists($this, 'expectExceptionMessage')) {
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage($exception_message);
+        } else {
+            // for phpunit 4.x
+            $this->setExpectedException(\RuntimeException::class, $exception_message);
+        }
+
+        require_once \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/invalid_warning/autoload.php');
+        \Badoo\SoftMocks::getClassConst(
+            'Badoo\SoftMock\Tests\Fixtures\ExceptionInBody',
+            'TEST',
+            'Badoo\SoftMock\Tests\Fixtures\ExceptionInBody'
+        );
+    }
+
+    public function testConstantImporting()
+    {
+        $file = __DIR__ . '/fixtures/namespace2/constant_use.php';
+        $rewrite = \Badoo\SoftMocks::rewrite($file);
+        self::assertEquals('test1', include($rewrite));
     }
 
     public function testPauseResumeConstants()
@@ -2968,5 +3085,33 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $values_inside_pause = [];
         foreach ($class->generatorInsidePause() as $item) $values_inside_pause[] = $item;
         $this->assertEquals($values_inside_pause, [$new_result]);
+    }
+
+    public function testClearBasePath()
+    {
+        \Badoo\SoftMocks::setBasePaths([__DIR__ . '/']);
+        $file = \Badoo\SoftMocks::clearBasePath(__FILE__);
+        self::assertEquals(basename(__FILE__), $file);
+    }
+
+    public function testRestoreAll()
+    {
+        \Badoo\SoftMocks::redefineConstant('\Badoo\SoftMock\Tests\DefaultTestClass::VALUE', 2);
+        \Badoo\SoftMocks::redefineMethod(
+            BaseInheritanceTestClass::class,
+            'doSomething',
+            '',
+            'return 43;'
+        );
+
+        // ensure that the arrays have changed
+        static::assertNotEquals([], \Badoo\SoftMocks::$class_const_mocks_by_name);
+        static::assertNotEquals([], \Badoo\SoftMocks::$mocks_by_name);
+
+        \Badoo\SoftMocks::restoreAll();
+
+        // ensure that the arrays have been reset
+        static::assertEquals([], \Badoo\SoftMocks::$class_const_mocks_by_name);
+        static::assertEquals([], \Badoo\SoftMocks::$mocks_by_name);
     }
 }

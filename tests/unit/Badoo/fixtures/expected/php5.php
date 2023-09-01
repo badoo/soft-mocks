@@ -31,9 +31,9 @@ END;
     
     
     
-    \Badoo\SoftMocks::callExit();} elseif (false) {
-    
-    echo "Never1!\n";} else {
+    \Badoo\SoftMocks::callExit();} 
+    elseif (false) {
+        echo "Never1!\n";} else {
     if (false) {
         echo "Never2!\n";} else {
         
@@ -79,7 +79,7 @@ $array = [
     \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'replaceSomething', ['string']),
     3,
 ];
-for ($i = 0; $i < \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'count', [$array]); $i++) {
+for ($i = 0; $i < \Badoo\SoftMocks::callFunction('', 'count', [$array]); $i++) {
     $value = $array[$i];}
 
 
@@ -116,7 +116,7 @@ $function = static function () {
 
 trait SomeTrait{
     
-    public function getSomeValue(){if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeTrait::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
+    public function getSomeValue(){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeTrait::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
         
         return 1;}}
 
@@ -127,28 +127,28 @@ interface SomeInterface{
     public function getSomeValue();}
 
 
-class SomeClass implements SomeInterface{
+class SomeClass implements \Some\Name\Space\SomeInterface{
     
-    use SomeTrait;
+    use \Some\Name\Space\SomeTrait;
     
     const VALUE = 1;
     
     public $a = 1;
     
-    public static function getValue(){if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
+    public static function getValue(){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
         
-        return \Badoo\SoftMocks::getClassConst(self::class, 'VALUE', self::class);}
+        return isset(\Badoo\SoftMocks::$class_const_mocks_by_name['VALUE']) ? \Badoo\SoftMocks::getClassConst(self::class, 'VALUE', self::class) : self::VALUE;}
     
     
-    public function method($string){if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$string];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
+    public function method($string){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$string];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
         
         return self::methodSelf($string);}
     
     
-    protected static function methodSelf($string){if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$string];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
+    protected static function methodSelf($string){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(SomeClass::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$string];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
         
         return \Badoo\SoftMocks::callFunction(__NAMESPACE__, 'replaceSomething', [&$string]);}}
 
 
 
-$some = new SomeClass();
+$some = new \Some\Name\Space\SomeClass();

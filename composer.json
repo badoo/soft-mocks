@@ -10,16 +10,20 @@
     }
   ],
   "require": {
-    "ext-json": "*",
     "php": ">=7.0",
-    "nikic/php-parser": "^4.10.2"
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "nikic/php-parser": "^4.15.2"
   },
   "require-dev": {
-    "vaimo/composer-patches": "3.23.1",
-    "phpunit/phpunit": "^8.4.3"
+    "vaimo/composer-patches": "4.22.4",
+    "phpunit/phpunit": ">=8.5.21 <8.5.22"
   },
   "config": {
-    "preferred-install": "source"
+    "preferred-install": "source",
+    "allow-plugins": {
+      "vaimo/composer-patches": true
+    }
   },
   "extra": {
     "patches": {
@@ -105,7 +109,19 @@
         {
           "label": "Add ability to set custom filename rewrite callbacks",
           "source": "patches/phpunit8.x/phpunit_add_ability_to_set_custom_filename_rewrite_callbacks.patch",
-          "version": ">=8.0.0",
+          "version": ">=8.0.0 <8.4.2",
+          "level": "1"
+        },
+        {
+          "label": "Add ability to set custom filename rewrite callbacks",
+          "source": "patches/phpunit8.x/phpunit8.4.3_add_ability_to_set_custom_filename_rewrite_callbacks.patch",
+          "version": ">=8.4.3 <8.5.0",
+          "level": "1"
+        },
+        {
+          "label": "Add ability to set custom filename rewrite callbacks",
+          "source": "patches/phpunit8.x/phpunit8.5.21_add_ability_to_set_custom_filename_rewrite_callbacks.patch",
+          "version": ">=8.5.21 <8.5.22",
           "level": "1"
         }
       ],
