@@ -42,6 +42,7 @@ function multipleArguments($arg1, ?int $arg2 = \null, int $arg3 = 1) : void{}
 #[\Attribute]class TestAttribute{
     
     
+    public const TEST_VALUE = 'test-value';
     private string $event;
     
     public function __construct(string $event){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttribute::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$event];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
@@ -66,7 +67,10 @@ function multipleArguments($arg1, ?int $arg2 = \null, int $arg3 = 1) : void{}
     
     
         
-        #[\TestAttribute('event3')]protected function bar(#[\TestAttribute('event4')] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
+        #[\TestAttribute('event3')]protected function bar(#[\TestAttribute('event4')] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}
+    
+        #[\TestAttribute(\TestAttribute::TEST_VALUE)]protected function bar(#[\TestAttribute(\TestAttribute::TEST_VALUE)] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
+
 
 function matchTest(int $input) : string{
     
