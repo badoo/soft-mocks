@@ -1,5 +1,14 @@
 # SoftMocks ChangeLog
 
+## v3.5.4
+
+There are next changes:
+
+- Do not try overriding constants for attributes instantiation, e.g.
+```php
+    #[TestAttribute(TestAttribute::TEST_VALUE)]
+    protected function bar(#[TestAttribute(TestAttribute::TEST_VALUE)] $bar): void {}
+```
 ## v3.5.3
 
 There are next changes:
