@@ -2477,6 +2477,16 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $this->disable_const_rewrite_level--;
     }
 
+    public function beforeAttribute()
+    {
+        $this->disable_const_rewrite_level++;
+    }
+
+    public function rewriteAttribute()
+    {
+        $this->disable_const_rewrite_level--;
+    }
+
     public function beforeStmt_Interface(\PhpParser\Node\Stmt\Interface_ $Node)
     {
         $this->cur_class = $Node->name;
