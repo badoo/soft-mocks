@@ -1,5 +1,26 @@
 # SoftMocks ChangeLog
 
+## v3.5.4
+
+There are next changes:
+
+- Do not try overriding constants for attributes instantiation, e.g.
+```php
+    #[TestAttribute(TestAttribute::TEST_VALUE)]
+    protected function bar(#[TestAttribute(TestAttribute::TEST_VALUE)] $bar): void {}
+```
+## v3.5.3
+
+There are next changes:
+
+- Fix SoftMocks::isCallable triggering E_DEPRECATED for floats
+
+## v3.5.2
+
+There are next changes:
+
+- Support for rewriting calls with named arguments
+
 ## v3.5.1
 
 There are next changes:

@@ -8,6 +8,8 @@
 
 namespace Badoo;
 
+use PhpParser\Node\Scalar\String_;
+
 class SoftMocksFunctionCreator
 {
     public static function run($obj, $class, $params, $mocks)
@@ -726,7 +728,7 @@ class SoftMocks
             return;
         }
         throw new \RuntimeException(
-            "Can't find nikic/php-parser version in installed packages for for right rewritten files cache"
+            "Can't find nikic/php-parser version in installed packages for right rewritten files cache"
         );
     }
 
@@ -1400,7 +1402,7 @@ class SoftMocks
             return is_callable($callable);
         }
 
-        if (is_scalar($callable) && isset(self::$func_mocks[$callable])) {
+        if (is_string($callable) && isset(self::$func_mocks[$callable])) {
             return true;
         }
 
@@ -2487,6 +2489,16 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $this->disable_const_rewrite_level--;
     }
 
+    public function beforeAttribute()
+    {
+        $this->disable_const_rewrite_level++;
+    }
+
+    public function rewriteAttribute()
+    {
+        $this->disable_const_rewrite_level--;
+    }
+
     public function beforeStmt_Interface(\PhpParser\Node\Stmt\Interface_ $Node)
     {
         $this->cur_class = $Node->name;
@@ -2858,9 +2870,14 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
                     [$ArgsArray, $unpacked_arg]
                 );
             }
+
+            $arg_name = null;
+            if (!empty($arg->name)) {
+                $arg_name = new String_($arg->name->name);
+            }
             $arr_args[] = new \PhpParser\Node\Expr\ArrayItem(
                 $arg->value,
-                null,
+                $arg_name,
                 $is_ref
             );
 

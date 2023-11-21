@@ -42,6 +42,7 @@ multipleArguments(arg1: 'arg1', arg3: 10);
 #[Attribute]
 class TestAttribute
 {
+    public const TEST_VALUE = 'test-value';
     private string $event;
 
     public function __construct(string $event)
@@ -66,6 +67,9 @@ class TestAttributeUser2
 
     #[TestAttribute('event3')]
     protected function bar(#[TestAttribute('event4')] $bar): void {}
+
+    #[TestAttribute(TestAttribute::TEST_VALUE)]
+    protected function bar(#[TestAttribute(TestAttribute::TEST_VALUE)] $bar): void {}
 }
 
 function matchTest(int $input): string
