@@ -2943,6 +2943,11 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         }
 
         if ($isFunctionName) {
+            // The code was calling a function using a static name. Instead of always calling SoftMocks::callFunction(),
+            // we optimize this by first checking SoftMocks::$func_mocks_by_name[$baseFunctionName] to see if there is
+            // a mock for that given function name. If no mock exists, we do the original call instead.
+            // Before rewrite: someFunc($arg)
+            // After rewrite: isset(SoftMocks::$func_mocks_by_name['someFunc']) ? SoftMocks::callFunction('', 'someFunc', [$arg]) : someFunc($arg)
             $baseFunctionName = array_slice(explode("\\", $Node->name->toString()), -1)[0];
             $NewNode = new \PhpParser\Node\Expr\Ternary(
                 new \PhpParser\Node\Expr\Isset_(
