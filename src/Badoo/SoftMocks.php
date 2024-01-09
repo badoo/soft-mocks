@@ -462,7 +462,9 @@ class SoftMocks
     public static $mocks_by_name = [];
 
     private static $func_mocks = [];
+    public static $func_mocks_by_name = [];
     private static $internal_func_mocks = []; // internal mocks that cannot be changed
+    private static $internal_func_mocks_by_name = [];
 
     private static $generator_mocks = []; // mocks for generators
 
@@ -666,7 +668,9 @@ class SoftMocks
         self::$internal_func_mocks = [];
         foreach (self::$func_mocks as $func => $mock) {
             self::$internal_func_mocks[$func] = $mock;
+            self::$internal_func_mocks_by_name[$func][$func] = true;
         }
+        self::$func_mocks_by_name = self::$internal_func_mocks_by_name;
 
         $functions = get_defined_functions();
         foreach ($functions['internal'] as $func) {
@@ -1741,6 +1745,8 @@ class SoftMocks
         $mock_array = ['args' => $functionArgs, 'code' => $fakeCode];
         if (self::$paused) self::$paused_func_mocks[$func] = $mock_array;
         else self::$func_mocks[$func] = $mock_array;
+        $funcBaseName = array_slice(explode("\\", $func), -1)[0];
+        self::$func_mocks_by_name[$funcBaseName][$func] = true;
     }
 
     public static function redefineExit($args, $fakeCode)
@@ -1764,6 +1770,11 @@ class SoftMocks
         }
 
         unset(self::$func_mocks[$func]);
+        $funcBaseName = array_slice(explode("\\", $func), -1)[0];
+        unset(self::$func_mocks_by_name[$funcBaseName][$func]);
+        if ((self::$func_mocks_by_name[$funcBaseName] ?? null) === []) {
+            unset(self::$func_mocks_by_name[$funcBaseName]);
+        }
     }
 
     public static function restoreAll()
@@ -1773,6 +1784,7 @@ class SoftMocks
         self::$paused = false;
         self::$mocks_by_name = [];
         self::$class_const_mocks_by_name = [];
+        self::$func_mocks_by_name = self::$internal_func_mocks_by_name;
     }
 
     private static function restoreAllActual()
@@ -2914,9 +2926,10 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             $namespaceArg = new \PhpParser\Node\Arg(new \PhpParser\Node\Scalar\String_(''));
         }
 
+        $isFunctionName = $Node->name instanceof \PhpParser\Node\Name;
         $NewNode = new \PhpParser\Node\Expr\StaticCall(
             new \PhpParser\Node\Name("\\" . SoftMocks::class),
-            $Node->name instanceof \PhpParser\Node\Name ? 'callFunction' : 'call',
+            $isFunctionName ? 'callFunction' : 'call',
             [
                 $namespaceArg,
                 $name,
@@ -2924,13 +2937,37 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             ]
         );
 
-        $NewNode->setAttribute('startLine', $Node->getStartLine());
-        $NewNode->setAttribute('endLine', $Node->getStartLine());
-
         foreach ($NewNode->args as $ArgNode) {
             $ArgNode->setAttribute('startLine', $Node->getStartLine());
             $ArgNode->setAttribute('endLine', $Node->getStartLine());
         }
+
+        if ($isFunctionName) {
+            // The code was calling a function using a static name. Instead of always calling SoftMocks::callFunction(),
+            // we optimize this by first checking SoftMocks::$func_mocks_by_name[$baseFunctionName] to see if there is
+            // a mock for that given function name. If no mock exists, we do the original call instead.
+            // Before rewrite: someFunc($arg)
+            // After rewrite: isset(SoftMocks::$func_mocks_by_name['someFunc']) ? SoftMocks::callFunction('', 'someFunc', [$arg]) : someFunc($arg)
+            $baseFunctionName = array_slice(explode("\\", $Node->name->toString()), -1)[0];
+            $NewNode = new \PhpParser\Node\Expr\Ternary(
+                new \PhpParser\Node\Expr\Isset_(
+                    [
+                        new \PhpParser\Node\Expr\ArrayDimFetch(
+                            new \PhpParser\Node\Expr\StaticPropertyFetch(
+                                new \PhpParser\Node\Name("\\" . SoftMocks::class),
+                                'func_mocks_by_name'
+                            ),
+                            new \PhpParser\Node\Scalar\String_($baseFunctionName)
+                        )
+                    ]
+                ),
+                $NewNode,
+                $Node
+            );
+        }
+
+        $NewNode->setAttribute('startLine', $Node->getStartLine());
+        $NewNode->setAttribute('endLine', $Node->getStartLine());
 
         return $NewNode;
     }

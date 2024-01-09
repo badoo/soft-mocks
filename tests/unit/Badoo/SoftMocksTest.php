@@ -3094,9 +3094,27 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         self::assertEquals(basename(__FILE__), $file);
     }
 
+    public function testRedefineAndRestoreFunction()
+    {
+        // mocks for some functions are always enabled, so we will compare against the original state
+        $initialFunctionMocksMap = \Badoo\SoftMocks::$func_mocks_by_name;
+
+        \Badoo\SoftMocks::redefineFunction('Badoo\SoftMock\Tests\functionToTestRestore', '', 'return 2;');
+        static::assertEquals(2, functionToTestRestore());
+        static::assertEquals(['Badoo\SoftMock\Tests\functionToTestRestore' => true], \Badoo\SoftMocks::$func_mocks_by_name['functionToTestRestore']);
+
+        \Badoo\SoftMocks::restoreFunction('Badoo\SoftMock\Tests\functionToTestRestore');
+        static::assertEquals(1, functionToTestRestore());
+        static::assertEquals($initialFunctionMocksMap, \Badoo\SoftMocks::$func_mocks_by_name);
+    }
+
     public function testRestoreAll()
     {
+        // mocks for some functions are always enabled, so we will compare against the original state
+        $initialFunctionMocksMap = \Badoo\SoftMocks::$func_mocks_by_name;
+
         \Badoo\SoftMocks::redefineConstant('\Badoo\SoftMock\Tests\DefaultTestClass::VALUE', 2);
+        \Badoo\SoftMocks::redefineFunction('Badoo\SoftMock\Tests\functionToTestRestore', '', 'return 2;');
         \Badoo\SoftMocks::redefineMethod(
             BaseInheritanceTestClass::class,
             'doSomething',
@@ -3107,11 +3125,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         // ensure that the arrays have changed
         static::assertNotEquals([], \Badoo\SoftMocks::$class_const_mocks_by_name);
         static::assertNotEquals([], \Badoo\SoftMocks::$mocks_by_name);
+        static::assertNotEquals($initialFunctionMocksMap, \Badoo\SoftMocks::$func_mocks_by_name);
 
         \Badoo\SoftMocks::restoreAll();
 
         // ensure that the arrays have been reset
         static::assertEquals([], \Badoo\SoftMocks::$class_const_mocks_by_name);
         static::assertEquals([], \Badoo\SoftMocks::$mocks_by_name);
+        static::assertEquals($initialFunctionMocksMap, \Badoo\SoftMocks::$func_mocks_by_name);
     }
 }

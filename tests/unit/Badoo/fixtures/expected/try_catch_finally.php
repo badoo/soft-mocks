@@ -1,7 +1,7 @@
 <?php
 
 try {
-    $a = \Badoo\SoftMocks::callFunction('', 'replaceSomething', ["something"]);} catch (\Exception $e) {
+    $a = isset(\Badoo\SoftMocks::$func_mocks_by_name['replaceSomething']) ? \Badoo\SoftMocks::callFunction('', 'replaceSomething', ["something"]) : \replaceSomething("something");} catch (\Exception $e) {
     
     echo $e->getMessage();} finally {
     
