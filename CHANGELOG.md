@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.6.0
+
+There are next changes:
+
+- Optimize callFunction
+
 ## v3.5.4
 
 There are next changes:
