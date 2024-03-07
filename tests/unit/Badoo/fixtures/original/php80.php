@@ -26,7 +26,7 @@ function intOrFloatArgumentAndResult(int|float $intOrFloat): int|float {
     return $intOrFloat;
 }
 
-function nullsafeUsagee() {
+function nullSafeUsage() {
     function returnNull() {
         return null;
     }
@@ -39,8 +39,32 @@ function multipleArguments($arg1, ?int $arg2 = null, int $arg3 = 1): void
 
 multipleArguments(arg1: 'arg1', arg3: 10);
 
-#[Attribute]
+#[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_ALL)]
 class TestAttribute
+{
+    public const TEST_VALUE = 'test-value';
+    private string $event;
+
+    public function __construct(string $event)
+    {
+        $this->event = $event;
+    }
+}
+
+#[Attribute]
+class TestAttributeNoOptions
+{
+    public const TEST_VALUE = 'test-value';
+    private string $event;
+
+    public function __construct(string $event)
+    {
+        $this->event = $event;
+    }
+}
+
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_FUNCTION | Attribute::TARGET_CLASS_CONSTANT | Attribute::TARGET_METHOD | Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
+class TestAttributeSpecificTargetOptions
 {
     public const TEST_VALUE = 'test-value';
     private string $event;
@@ -55,6 +79,9 @@ class TestAttribute
 class TestAttributeUser1
 {
     public function foo(): void {}
+
+    #[TestAttribute(TestAttribute::TEST_VALUE)]
+    protected function bar(#[TestAttribute(TestAttribute::TEST_VALUE)] $bar): void {}
 }
 
 #[
@@ -67,12 +94,11 @@ class TestAttributeUser2
 
     #[TestAttribute('event3')]
     protected function bar(#[TestAttribute('event4')] $bar): void {}
-
-    #[TestAttribute(TestAttribute::TEST_VALUE)]
-    protected function bar(#[TestAttribute(TestAttribute::TEST_VALUE)] $bar): void {}
 }
 
-function matchTest(int $input): string
+function matchTest(
+    int $input,
+): string
 {
     return match($input) {
         415 => 'teapot!',
@@ -102,6 +128,7 @@ class StaticReturn
     }
 }
 
+#[TestAttribute('value')]
 function throwExpression(mixed $input) {
     return $input ?? throw new \Exception();
 }

@@ -26,7 +26,7 @@ function intOrFloatArgumentAndResult(int|float $intOrFloat) : int|float{
     return $intOrFloat;}
 
 
-function nullsafeUsagee(){
+function nullSafeUsage(){
     function returnNull(){
         return \null;}
     
@@ -39,8 +39,8 @@ function multipleArguments($arg1, ?int $arg2 = \null, int $arg3 = 1) : void{}
 
 isset(\Badoo\SoftMocks::$func_mocks_by_name['multipleArguments']) ? \Badoo\SoftMocks::callFunction('', 'multipleArguments', ['arg1' => 'arg1', 'arg3' => 10]) : \multipleArguments(arg1: 'arg1', arg3: 10);
 
-#[\Attribute]class TestAttribute{
-    
+#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_ALL)]
+class TestAttribute{
     
     public const TEST_VALUE = 'test-value';
     private string $event;
@@ -51,28 +51,54 @@ isset(\Badoo\SoftMocks::$func_mocks_by_name['multipleArguments']) ? \Badoo\SoftM
 
 
 
-#[\TestAttribute('event')]class TestAttributeUser1{
+#[\Attribute]
+class TestAttributeNoOptions{
     
+    public const TEST_VALUE = 'test-value';
+    private string $event;
     
-    public function foo() : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser1::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
+    public function __construct(string $event){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeNoOptions::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$event];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
+        
+        $this->event = $event;}}
 
 
-#[\TestAttribute('event'), \TestAttribute('event2')]class TestAttributeUser2{
+
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_FUNCTION | \Attribute::TARGET_CLASS_CONSTANT | \Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER | \Attribute::TARGET_PROPERTY)]
+class TestAttributeSpecificTargetOptions{
     
+    public const TEST_VALUE = 'test-value';
+    private string $event;
     
+    public function __construct(string $event){if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeSpecificTargetOptions::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$event];$variadic_params_idx = '';return eval($__softmocksvariableforcode);/** @codeCoverageIgnore */}
+        
+        $this->event = $event;}}
+
+
+
+#[\TestAttribute('event')]
+class TestAttributeUser1{
     
+    public function foo() : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser1::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}
     
+    #[\TestAttribute(\TestAttribute::TEST_VALUE)]
+    protected function bar(#[\TestAttribute(\TestAttribute::TEST_VALUE)] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser1::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
+
+
+#[\TestAttribute('event'), \TestAttribute('event2')]
+
+
+
+class TestAttributeUser2{
     
     public function foo() : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}
     
-    
-        
-        #[\TestAttribute('event3')]protected function bar(#[\TestAttribute('event4')] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}
-    
-        #[\TestAttribute(\TestAttribute::TEST_VALUE)]protected function bar(#[\TestAttribute(\TestAttribute::TEST_VALUE)] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
+    #[\TestAttribute('event3')]
+    protected function bar(#[\TestAttribute('event4')] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
 
 
 function matchTest(int $input) : string{
+    
+    
     
     return match ($input) {
         415 => 'teapot!',
@@ -102,6 +128,7 @@ class StaticReturn{
 
 
 
+#[\TestAttribute('value')]
 function throwExpression(mixed $input){
     return $input ?? throw new \Exception();}
 

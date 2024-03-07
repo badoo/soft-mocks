@@ -2772,7 +2772,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $result = \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/original/' . $filename);
         $this->assertNotFalse($result, "Rewrite failed");
 
-        //file_put_contents(__DIR__ . '/fixtures/expected/' . $filename, file_get_contents($result));
+//        file_put_contents(__DIR__ . '/fixtures/expected/' . $filename, file_get_contents($result));
         $this->assertEquals(trim(file_get_contents(__DIR__ . '/fixtures/expected/' . $filename)), file_get_contents($result));
     }
 

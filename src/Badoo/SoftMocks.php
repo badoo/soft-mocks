@@ -249,12 +249,9 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $node)
     {
-        $ret = '';
-        if ($node->attrGroups) {
-            $ret = $this->pStmts($node->attrGroups);
-        }
-
         $this->cur_ln = $node->getLine();
+        $ret = $this->addAttributeGroupsBeforeStatement($node);
+
         return $ret
             . $this->pModifiers($node->flags)
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
@@ -265,12 +262,9 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pStmt_Function(\PhpParser\Node\Stmt\Function_ $node)
     {
-        $ret = '';
-        if ($node->attrGroups) {
-            $ret = $this->pStmts($node->attrGroups);
-        }
-
         $this->cur_ln = $node->getLine();
+        $ret = $this->addAttributeGroupsBeforeStatement($node);
+
         return $ret
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
@@ -370,10 +364,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     protected function pClassCommon(\PhpParser\Node\Stmt\Class_ $node, $afterClassToken)
     {
-        $ret = '';
-        if ($node->attrGroups) {
-            $ret = $this->pStmts($node->attrGroups);
-        }
+        $ret = $this->addAttributeGroupsBeforeStatement($node);
 
         return $ret
             . $this->pModifiers($node->flags)
@@ -400,6 +391,20 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         $this->cur_ln = $bak_line + mb_substr_count($return, "\n");
 
         return $return;
+    }
+
+    protected function addAttributeGroupsBeforeStatement(
+        \PhpParser\Node\Stmt\Class_|\PhpParser\Node\Stmt\Function_|\PhpParser\Node\Stmt\ClassMethod $node,
+    ): string {
+        if (!$node->attrGroups) {
+            return '';
+        }
+
+        $ret = $this->pStmts($node->attrGroups, false);
+        $addLinesCount = $node->name->getStartLine() - $this->cur_ln;
+        $ret .= str_repeat($this->nl, $addLinesCount);
+        $this->cur_ln += $addLinesCount;
+        return $ret;
     }
 }
 
@@ -940,7 +945,7 @@ class SoftMocks
                         }
                     }
 
-                    foreach (self::$backtrace_ignored_method_calls as list($ignoreClass, $ignoreMethod)) {
+                    foreach (self::$backtrace_ignored_method_calls as [$ignoreClass, $ignoreMethod]) {
                         if (
                             strpos($str, " {$ignoreClass}->{$ignoreMethod}(") !== false ||
                             strpos($str, " {$ignoreClass}::{$ignoreMethod}(") !== false
@@ -1359,12 +1364,12 @@ class SoftMocks
             if (count($parts) != 2) {
                 throw new \RuntimeException("Invalid callable format for '$callable', expected single '::'");
             }
-            list($obj, $method) = $parts;
+            [$obj, $method] = $parts;
         } else if (is_array($callable)) {
             if (count($callable) != 2) {
                 throw new \RuntimeException("Invalid callable format, expected array of exactly 2 elements");
             }
-            list($obj, $method) = $callable;
+            [$obj, $method] = $callable;
         } else {
             return call_user_func_array($callable, $args);
         }
@@ -2165,7 +2170,7 @@ class SoftMocks
 
             $method = $callable[1];
         } else if (is_scalar($callable) && strpos($callable, '::') !== false) {
-            list($class, $method) = explode("::", $callable);
+            [$class, $method] = explode("::", $callable);
         } else {
             return call_user_func_array($callable, $args);
         }
