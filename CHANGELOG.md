@@ -1,5 +1,12 @@
 # SoftMocks ChangeLog
 
+## v3.6.1
+
+Changes:
+- Fixed line preserving for Attributes (PHP >= 8.0)
+- SoftMocks are now compatible with PHP 8.1 and PHP 8.2.
+  - Enum cases rewriting is not supported for now, but other enum manipulations work the same way as for classes.
+
 ## v3.6.0
 
 There are next changes:

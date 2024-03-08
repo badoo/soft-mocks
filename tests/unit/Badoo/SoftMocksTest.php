@@ -2765,14 +2765,18 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             static::markTestSkippedForPHPVersionBelow('8.0.0');
         }
 
-        if ($filename === 'php81.php') {
+        if ($filename === 'php81.php' || $filename === 'enums.php') {
             static::markTestSkippedForPHPVersionBelow('8.1.0');
+        }
+
+        if ($filename === 'php82.php') {
+            static::markTestSkippedForPHPVersionBelow('8.2.0');
         }
 
         $result = \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/original/' . $filename);
         $this->assertNotFalse($result, "Rewrite failed");
 
-        //file_put_contents(__DIR__ . '/fixtures/expected/' . $filename, file_get_contents($result));
+//        file_put_contents(__DIR__ . '/fixtures/expected/' . $filename, file_get_contents($result));
         $this->assertEquals(trim(file_get_contents(__DIR__ . '/fixtures/expected/' . $filename)), file_get_contents($result));
     }
 
@@ -3133,5 +3137,71 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertEquals([], \Badoo\SoftMocks::$class_const_mocks_by_name);
         static::assertEquals([], \Badoo\SoftMocks::$mocks_by_name);
         static::assertEquals($initialFunctionMocksMap, \Badoo\SoftMocks::$func_mocks_by_name);
+    }
+
+    public function testClosuresWithSpreadOperator(): void
+    {
+        static::markTestSkippedForPHPVersionBelow('8.1.0');
+        require_once 'SoftMocksTestClassesPhp81.php';
+
+        SoftMocks::redefineFunction(
+            'Badoo\SoftMock\Tests\functionToUseWithSpreadOperator',
+            'int $value',
+            'return $value;',
+        );
+
+        $result = functionToTestClosureWithSpreadOperator();
+        $this->assertSame(1, $result, 'Fake result should be the first passed value (1).');
+    }
+
+    public function testEnumMocksRedefineStandardFeatures(): void
+    {
+        static::markTestSkippedForPHPVersionBelow('8.1.0');
+        require_once 'SoftMocksTestClassesPhp81.php';
+
+        SoftMocks::redefineConstant(myEnum::class . '::TEST', 'hello');
+        $this->assertSame(
+            'hello',
+            myEnum::getTest(),
+            'It should be possible to redefine a constant from an enum.',
+        );
+
+        SoftMocks::redefineMethod(myEnum::class, 'getDefault', '','return self::one;');
+        $this->assertSame(
+            myEnum::one->value,
+            myEnum::getDefault()->value,
+            "It should be possible to redefine static method from an enum.",
+        );
+
+        SoftMocks::redefineMethod(myEnum::class, 'toInt', 'int $addThis', 'return (int)$this->value + $addThis - 32;');
+        $this->assertSame(
+            false,
+            myEnum::three->isLarge(3),
+            'It should be possible to redefine private method from an enum.',
+        );
+    }
+
+    public function testEnumMocksCannotRedefineCaseAsConstant(): void
+    {
+        static::markTestSkippedForPHPVersionBelow('8.1.0');
+        require_once 'SoftMocksTestClassesPhp81.php';
+
+        // a real constant, works fine:
+        SoftMocks::redefineConstant('Badoo\SoftMock\Tests\myEnum::TEST', '42');
+
+        // this does not exist, so it works as if it were a constant:
+        SoftMocks::redefineConstant('Badoo\SoftMock\Tests\myEnum::seven', '42');
+
+        try {
+            SoftMocks::redefineConstant('Badoo\SoftMock\Tests\myEnum::one', '42');
+        } catch (\RuntimeException $e) {
+            $this->assertSame(
+                'Redefining enum cases like Badoo\SoftMock\Tests\myEnum::one is currently not supported',
+                $e->getMessage(),
+            );
+            return;
+        }
+
+        $this->fail("Redefining enum cases using redefineConstant() should be blocked.");
     }
 }
