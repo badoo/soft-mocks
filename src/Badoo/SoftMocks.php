@@ -39,7 +39,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
      *
      * @return string Pretty printed statements
      */
-    protected function pStmts(array $nodes, bool $indent = true) : string
+    protected function pStmts(array $nodes, bool $indent = true, bool $addComments = true) : string
     {
         if ($indent) {
             $this->indent();
@@ -51,7 +51,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
             $cur_ln = $this->cur_ln;
 
-            $comments = $node->getComments();
+            $comments = $addComments ? $node->getComments() : '';
             $comments = !empty($comments) ? ($this->nl . $this->pComments($node->getComments())) : '';
             $this->cur_ln += mb_substr_count($comments, "\n");
 
@@ -418,10 +418,12 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             return '';
         }
 
-        $ret = $this->pStmts($node->attrGroups, false);
+        $ret = $this->pStmts($node->attrGroups, false, false);
         $addLinesCount = $node->name->getStartLine() - $this->cur_ln;
-        $ret .= str_repeat($this->nl, $addLinesCount);
-        $this->cur_ln += $addLinesCount;
+        if ($addLinesCount >= 0) {
+            $ret .= str_repeat($this->nl, $addLinesCount);
+            $this->cur_ln += $addLinesCount;
+        }
         return $ret;
     }
 

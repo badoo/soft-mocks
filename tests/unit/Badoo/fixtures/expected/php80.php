@@ -63,6 +63,9 @@ class TestAttributeNoOptions{
 
 
 
+/**
+ * before class attribute
+ */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_FUNCTION | \Attribute::TARGET_CLASS_CONSTANT | \Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER | \Attribute::TARGET_PROPERTY)]
 class TestAttributeSpecificTargetOptions{
     
@@ -76,10 +79,16 @@ class TestAttributeSpecificTargetOptions{
 
 
 #[\TestAttribute('event')]
+
+
+
 class TestAttributeUser1{
     
     public function foo() : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser1::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}
     
+    /**
+ * before method attribute
+ */
     #[\TestAttribute(\TestAttribute::TEST_VALUE)]
     protected function bar(#[\TestAttribute(\TestAttribute::TEST_VALUE)] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser1::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
 
@@ -93,6 +102,9 @@ class TestAttributeUser2{
     public function foo() : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}
     
     #[\TestAttribute('event3')]
+    
+    
+    
     protected function bar(#[\TestAttribute('event4')] $bar) : void{if (isset(\Badoo\SoftMocks::$mocks_by_name[__FUNCTION__]) && false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked(TestAttributeUser2::class, static::class, __FUNCTION__))) {$mm_func_args = func_get_args();$params = [$bar];$variadic_params_idx = '';eval($__softmocksvariableforcode);return;/** @codeCoverageIgnore */}}}
 
 

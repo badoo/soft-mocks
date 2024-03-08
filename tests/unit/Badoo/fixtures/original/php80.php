@@ -63,6 +63,9 @@ class TestAttributeNoOptions
     }
 }
 
+/**
+ * before class attribute
+ */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_FUNCTION | Attribute::TARGET_CLASS_CONSTANT | Attribute::TARGET_METHOD | Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 class TestAttributeSpecificTargetOptions
 {
@@ -76,10 +79,16 @@ class TestAttributeSpecificTargetOptions
 }
 
 #[TestAttribute('event')]
+/**
+ * after class attribute
+ */
 class TestAttributeUser1
 {
     public function foo(): void {}
 
+    /**
+     * before method attribute
+     */
     #[TestAttribute(TestAttribute::TEST_VALUE)]
     protected function bar(#[TestAttribute(TestAttribute::TEST_VALUE)] $bar): void {}
 }
@@ -93,6 +102,9 @@ class TestAttributeUser2
     public function foo(): void {}
 
     #[TestAttribute('event3')]
+    /**
+     * after method attribute
+     */
     protected function bar(#[TestAttribute('event4')] $bar): void {}
 }
 
