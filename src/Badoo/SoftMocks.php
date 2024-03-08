@@ -234,6 +234,24 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return $this->pClassCommon($node, ' ' . $node->name);
     }
 
+    protected function pStmt_Enum(\PhpParser\Node\Stmt\Enum_ $node)
+    {
+        $this->cur_ln = $node->getLine();
+        return 'enum ' . $node->name
+            . ($node->scalarType ? " : $node->scalarType" : '')
+            . (!empty($node->implements) ? ' implements ' . $this->pCommaSeparated($node->implements) : '')
+            . '{' . $this->pStmts($node->stmts) . '}';
+
+    }
+
+    protected function pStmt_EnumCase(\PhpParser\Node\Stmt\EnumCase $node)
+    {
+        $this->cur_ln = $node->getLine();
+        return 'case ' . $node->name
+            . ($node->expr ? ' = ' . $this->p($node->expr) : '')
+            . ';';
+    }
+
     protected function pStmt_Trait(\PhpParser\Node\Stmt\Trait_ $node)
     {
         $this->cur_ln = $node->getLine();
@@ -256,7 +274,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . $this->pModifiers($node->flags)
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
-            . (null !== $node->returnType ? ' : ' . $this->p($node->returnType) : '')
+            . ($this->functionShouldReturn($node) ? ' : ' . $this->p($node->returnType) : '')
             . (null !== $node->stmts ? '{' . $this->pStmts($node->stmts) . '}' : ';');
     }
 
@@ -268,7 +286,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return $ret
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
-            . (null !== $node->returnType ? ' : ' . $this->p($node->returnType) : '')
+            . ($this->functionShouldReturn($node) ? ' : ' . $this->p($node->returnType) : '')
             . '{' . $this->pStmts($node->stmts) . '}';
     }
 
@@ -405,6 +423,19 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         $ret .= str_repeat($this->nl, $addLinesCount);
         $this->cur_ln += $addLinesCount;
         return $ret;
+    }
+
+    protected function functionShouldReturn(\PhpParser\Node\Stmt\ClassMethod|\PhpParser\Node\Stmt\Function_ $node): bool
+    {
+        if ($node->returnType === null) {
+            return false;
+        }
+
+        if ($node->returnType instanceof \PhpParser\Node\Identifier && $node->returnType->name === 'never') {
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -2005,6 +2036,10 @@ class SoftMocks
             throw new \RuntimeException("Constant $constantName cannot be mocked using Soft Mocks");
         }
 
+        if (SoftMocksTraverser::isEnumCase($constantName)) {
+            throw new \RuntimeException("Redefining enum cases like $constantName is currently not supported");
+        }
+
         if (self::$paused) self::$paused_constant_mocks[$constantName] = $value;
         else self::$constant_mocks[$constantName] = $value;
 
@@ -2405,14 +2440,25 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         self::$ignore_functions[$function] = true;
     }
 
+    public static function isEnumCase(string $constantName): bool
+    {
+        [$className,] = explode('::', $constantName);
+        if (enum_exists($className, false) && defined($constantName)) {
+            if (constant($constantName) instanceof $className) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private $filename;
 
     private $disable_const_rewrite_level = 0;
-
     private $in_interface = false;
     private $in_closure_level = 0;
     private $has_yield = false;
     private $cur_class = '';
+
     private $cur_class_stack = [];
 
     public function __construct($filename)
@@ -2853,6 +2899,12 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $i = 0;
 
         foreach ($node_args as $arg) {
+            if ($arg instanceof \PhpParser\Node\VariadicPlaceholder) {
+                return new \PhpParser\Node\Expr\FuncCall(
+                    new \PhpParser\Node\Name(['', 'func_get_args'])
+                );
+            }
+
             /** @var \PhpParser\Node\Expr\ArrayItem $arg */
             $is_ref = false;
 
@@ -2945,6 +2997,10 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         foreach ($NewNode->args as $ArgNode) {
             $ArgNode->setAttribute('startLine', $Node->getStartLine());
             $ArgNode->setAttribute('endLine', $Node->getStartLine());
+        }
+
+        if ($Node->isFirstClassCallable()) {
+            $NewNode = new \PhpParser\Node\Expr\ArrowFunction(['expr' => $NewNode]);
         }
 
         if ($isFunctionName) {
