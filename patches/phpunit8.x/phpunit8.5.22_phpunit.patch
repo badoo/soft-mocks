@@ -1,0 +1,91 @@
+diff --git a/phpunit b/phpunit
+--- a/phpunit	(revision ddd05b9d844260353895a3b950a9258126c11503)
++++ b/phpunit	(date 1730897906637)
+@@ -58,41 +58,64 @@
+     ini_set('date.timezone', 'UTC');
+ }
+
+-if (isset($GLOBALS['_composer_autoload_path'])) {
+-    define('PHPUNIT_COMPOSER_INSTALL', $GLOBALS['_composer_autoload_path']);
++// find soft-mocks init path
++$softMocksInitPath = '';
++foreach (array(__DIR__ . '/../../badoo/soft-mocks/src/init_with_composer.php', __DIR__ . '/../../../src/init_with_composer.php') as $file) {
++    if (file_exists($file)) {
++        $softMocksInitPath = $file;
++    }
++}
++unset($file);
++
++if ($softMocksInitPath) {
++    $composerInstall = require $softMocksInitPath;
++    require $composerInstall;
++    // inject soft-mocks into phpunit
++    class_exists(PHPUnit\Util\FileLoader::class);
++    \Badoo\SoftMocks::injectIntoPhpunit();
++    define('PHPUNIT_COMPOSER_INSTALL', $composerInstall);
++    unset($composerInstall);
++} else {
++    if (isset($GLOBALS['_composer_autoload_path'])) {
++        define('PHPUNIT_COMPOSER_INSTALL', $GLOBALS['_composer_autoload_path']);
+
+-    unset($GLOBALS['_composer_autoload_path']);
+-} else {
+-    foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php') as $file) {
+-        if (file_exists($file)) {
+-            define('PHPUNIT_COMPOSER_INSTALL', $file);
++        unset($GLOBALS['_composer_autoload_path']);
++    } else {
++        foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php') as $file) {
++            if (file_exists($file)) {
++                define('PHPUNIT_COMPOSER_INSTALL', $file);
+
+-            break;
+-        }
+-    }
++                break;
++            }
++        }
+
+-    unset($file);
+-}
++        unset($file);
++    }
+
+-if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
+-    fwrite(
+-        STDERR,
+-        'You need to set up the project dependencies using Composer:' . PHP_EOL . PHP_EOL .
+-        '    composer install' . PHP_EOL . PHP_EOL .
+-        'You can learn all about Composer on https://getcomposer.org/.' . PHP_EOL
+-    );
++    if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
++        fwrite(
++            STDERR,
++            'You need to set up the project dependencies using Composer:' . PHP_EOL . PHP_EOL .
++            '    composer install' . PHP_EOL . PHP_EOL .
++            'You can learn all about Composer on https://getcomposer.org/.' . PHP_EOL
++        );
+
+-    die(1);
++        die(1);
++    }
++    require PHPUNIT_COMPOSER_INSTALL;
+ }
+
+ $options = getopt('', array('prepend:'));
+
+ if (isset($options['prepend'])) {
+-    require $options['prepend'];
++    if ($softMocksInitPath) {
++        require \Badoo\SoftMocks::rewrite($options['prepend']);
++    } else {
++        require $options['prepend'];
++    }
+ }
+
+ unset($options);
+-
+-require PHPUNIT_COMPOSER_INSTALL;
++unset($softMocksInitPath);
+
+ PHPUnit\TextUI\Command::main();
