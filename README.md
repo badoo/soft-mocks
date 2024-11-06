@@ -197,6 +197,12 @@ The following functions undo mocks that were made using one of the redefine meth
 
 ## Using with PHPUnit
 
+### Maximum supported version
+
+Currently, the maximum supported version is **PHPUnit 8.5.38**
+
+### Installation
+
 If you want to use SoftMocks with PHPUnit 8.x then there are next particularities:
 - If phpunit is installed by composer then you should apply patch to `phpunit` _[patches/phpunit7.x/phpunit_phpunit.patch](patches/phpunit7.x/phpunit_phpunit.patch)_,so that classes loaded by composer would be rewritten by SoftMocks;
 - if phpunit is installed manually then you should require _[src/bootstrap.php](src/bootstrap.php)_, so that classes loaded by composer would be rewritten by SoftMocks;
@@ -284,6 +290,10 @@ Then you can change SoftMocks and run tests to be sure that all works:
 ./vendor/bin/phpunit 
 ```
 
+Remember to update CHANGELOG.md.
+
+If you are bumping the PHPUnit version, update readme with maximum supported version.
+
 ## FAQ
 
 **Q**: How can I prevent a specific function/class/constant from being redefined?
@@ -313,13 +323,9 @@ call_user_func_array('strlen', ['test']); // will return 20
 call_user_func('strlen', 'test'); // will return 5
 ```
 
-**Q**: Does SoftMocks work with PHP7?
+**Q**: Does SoftMocks work with PHP 8.2?
 
 **A**: Yes. The whole idea of SoftMocks is that it will continue to work for all further PHP versions without requiring a full system rewrite as it is for runkit and uopz.
-
-**Q**: Does SoftMocks work with HHVM?
-
-**A**: It seems that SoftMocks indeed works when using HHVM at the moment of writing this Q&A (HipHop VM 3.12.1 (rel)). We do not use HHVM internally so there can be some corner cases that are not covered. We appreciate any issues/pull requests regarding HHVM support.
 
 **Q**: Why do I get parse errors or fatal errors like "PhpParser::pSmth is undefined"?
 

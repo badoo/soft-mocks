@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## v3.6.2
+
+Changes:
+- Update maximum supported PHPUnit version from 8.5.21 to 8.5.38
+- Small README.md refresh to remove some legacy content and add PHPUnit version support information
+
 ## v3.6.1
 
 Changes:
