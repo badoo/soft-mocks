@@ -1,5 +1,10 @@
 # SoftMocks ChangeLog
 
+## 3.7
+
+Changes:
+- Updated `nikic/php-parser` from version `^4.15.2` to `^4.19.1`
+
 ## v3.6.2
 
 Changes:
