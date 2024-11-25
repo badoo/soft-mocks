@@ -5,7 +5,7 @@ The idea behind "Soft Mocks" - as opposed to "hardcore" mocks that work on the l
 [![GitHub release](https://img.shields.io/github/release/badoo/soft-mocks.svg)](https://github.com/badoo/soft-mocks/releases/latest)
 [![Total Downloads](https://img.shields.io/packagist/dt/badoo/soft-mocks.svg)](https://packagist.org/packages/badoo/soft-mocks)
 [![Daily Downloads](https://img.shields.io/packagist/dd/badoo/soft-mocks.svg)](https://packagist.org/packages/badoo/soft-mocks)
-[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg)](https://php.net/)
+[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%207.4-8892BF.svg)](https://php.net/)
 [![License](https://img.shields.io/packagist/l/badoo/soft-mocks.svg)](https://packagist.org/packages/badoo/soft-mocks)
 
 ## Installation
@@ -288,6 +288,12 @@ Then you can change SoftMocks and run tests to be sure that all works:
 
 ```
 ./vendor/bin/phpunit 
+```
+
+And finally, check tests on all supported PHP versions (requires Docker):
+
+```
+./run-tests.sh
 ```
 
 Remember to update CHANGELOG.md.
