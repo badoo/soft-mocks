@@ -14,13 +14,11 @@ $parts = isset(\Badoo\SoftMocks::$func_mocks_by_name['explode']) ? \Badoo\SoftMo
 function h($cnt){
     
     return isset(\Badoo\SoftMocks::$func_mocks_by_name['str_repeat']) ? \Badoo\SoftMocks::callFunction('', 'str_repeat', [<<<HERE
-123 {$cnt}
-HERE
- . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)), isset(\Badoo\SoftMocks::$func_mocks_by_name['intval']) ? \Badoo\SoftMocks::callFunction('', 'intval', [$cnt]) : \intval($cnt)]) : \str_repeat(
+    123 {$cnt}
+    HERE . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)), isset(\Badoo\SoftMocks::$func_mocks_by_name['intval']) ? \Badoo\SoftMocks::callFunction('', 'intval', [$cnt]) : \intval($cnt)]) : \str_repeat(
         <<<HERE
-123 {$cnt}
-HERE
- . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)),
+        123 {$cnt}
+        HERE . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)),
         isset(\Badoo\SoftMocks::$func_mocks_by_name['intval']) ? \Badoo\SoftMocks::callFunction('', 'intval', [$cnt]) : \intval($cnt));}
 
 
@@ -28,13 +26,11 @@ HERE
 function n($cnt){
     
     return isset(\Badoo\SoftMocks::$func_mocks_by_name['str_repeat']) ? \Badoo\SoftMocks::callFunction('', 'str_repeat', [<<<'NOW'
-123 {$cnt}
-NOW
- . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)), isset(\Badoo\SoftMocks::$func_mocks_by_name['intval']) ? \Badoo\SoftMocks::callFunction('', 'intval', [$cnt]) : \intval($cnt)]) : \str_repeat(
+    123 {$cnt}
+    NOW . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)), isset(\Badoo\SoftMocks::$func_mocks_by_name['intval']) ? \Badoo\SoftMocks::callFunction('', 'intval', [$cnt]) : \intval($cnt)]) : \str_repeat(
         <<<'NOW'
-123 {$cnt}
-NOW
- . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)),
+        123 {$cnt}
+        NOW . (isset(\Badoo\SoftMocks::$func_mocks_by_name['chr']) ? \Badoo\SoftMocks::callFunction('', 'chr', [123]) : \chr(123)),
         isset(\Badoo\SoftMocks::$func_mocks_by_name['intval']) ? \Badoo\SoftMocks::callFunction('', 'intval', [$cnt]) : \intval($cnt));}
 
 

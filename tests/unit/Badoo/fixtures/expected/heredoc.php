@@ -21,8 +21,8 @@ var4;
 function getDescription() : string{
     
     return <<<Description
-Test
-Description;}
+    Test
+    Description;}
 
 
 isset(\Badoo\SoftMocks::$func_mocks_by_name['var_dump']) ? \Badoo\SoftMocks::callFunction('', 'var_dump', ['test']) : \var_dump('test');

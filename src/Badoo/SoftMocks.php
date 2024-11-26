@@ -29,7 +29,6 @@ class SoftMocksFunctionCreator
 class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 {
     private $cur_ln;
-    protected $nl = "\n";
 
     /**
      * Pretty prints an array of nodes (statements) and indents them optionally.
@@ -120,8 +119,10 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
      * @return string
      */
     protected function handleMagicTokens(string $str) : string {
-        $str = str_replace($this->docStringEndToken . ';', ';', $str);
-        $str = str_replace($this->docStringEndToken, "\n", $str);
+        if (null !== $this->docStringEndToken) {
+            $str = str_replace($this->docStringEndToken . ';', ';', $str);
+            $str = str_replace($this->docStringEndToken, "\n", $str);
+        }
 
         return $str;
     }
@@ -129,6 +130,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
     public function prettyPrintFile(array $stmts) : string
     {
         $this->cur_ln = 1;
+        $this->resetState();
         $this->preprocessNodes($stmts);
         $result = $this->pStmts($stmts, false);
         $result = $this->handleMagicTokens($result);
@@ -139,9 +141,9 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return "{$prefix}{$result}";
     }
 
-    protected function pExpr_Array(\PhpParser\Node\Expr\Array_ $node)
+    protected function pExpr_Array(\PhpParser\Node\Expr\Array_ $node): string
     {
-        $is_short = $this->options['shortArraySyntax'] ? \PhpParser\Node\Expr\Array_::KIND_SHORT : \PhpParser\Node\Expr\Array_::KIND_LONG;
+        $is_short = $this->shortArraySyntax ? \PhpParser\Node\Expr\Array_::KIND_SHORT : \PhpParser\Node\Expr\Array_::KIND_LONG;
         $syntax = $node->getAttribute(
             'kind',
             $is_short
@@ -189,7 +191,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
      * @param bool $trailingComma
      * @return bool|string
      */
-    protected function pMaybeMultiline(array $nodes, $trailingComma = false)
+    protected function pMaybeMultiline(array $nodes, $trailingComma = false): string
     {
         if ($this->areNodesSingleLine($nodes)) {
             return $this->pCommaSeparated($nodes);
@@ -198,7 +200,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         }
     }
 
-    protected function pExpr_Closure(\PhpParser\Node\Expr\Closure $node)
+    protected function pExpr_Closure(\PhpParser\Node\Expr\Closure $node): string
     {
         $this->cur_ln = $node->getLine();
         return ($node->static ? 'static ' : '')
@@ -209,7 +211,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . ' {' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_Namespace(\PhpParser\Node\Stmt\Namespace_ $node)
+    protected function pStmt_Namespace(\PhpParser\Node\Stmt\Namespace_ $node): string
     {
         $this->cur_ln = $node->getLine();
         if ($this->canUseSemicolonNamespaces) {
@@ -220,7 +222,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         }
     }
 
-    protected function pStmt_Interface(\PhpParser\Node\Stmt\Interface_ $node)
+    protected function pStmt_Interface(\PhpParser\Node\Stmt\Interface_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'interface ' . $node->name
@@ -228,13 +230,13 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . '{' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_Class(\PhpParser\Node\Stmt\Class_ $node)
+    protected function pStmt_Class(\PhpParser\Node\Stmt\Class_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return $this->pClassCommon($node, ' ' . $node->name);
     }
 
-    protected function pStmt_Enum(\PhpParser\Node\Stmt\Enum_ $node)
+    protected function pStmt_Enum(\PhpParser\Node\Stmt\Enum_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'enum ' . $node->name
@@ -244,7 +246,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     }
 
-    protected function pStmt_EnumCase(\PhpParser\Node\Stmt\EnumCase $node)
+    protected function pStmt_EnumCase(\PhpParser\Node\Stmt\EnumCase $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'case ' . $node->name
@@ -252,20 +254,20 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . ';';
     }
 
-    protected function pStmt_Trait(\PhpParser\Node\Stmt\Trait_ $node)
+    protected function pStmt_Trait(\PhpParser\Node\Stmt\Trait_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'trait ' . $node->name
             . '{' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_TraitUse(\PhpParser\Node\Stmt\TraitUse $node)
+    protected function pStmt_TraitUse(\PhpParser\Node\Stmt\TraitUse $node): string
     {
         return 'use ' . $this->pCommaSeparated($node->traits)
             . (empty($node->adaptations) ? ';' : ' {' . $this->pStmts($node->adaptations) . '}');
     }
 
-    protected function pStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $node)
+    protected function pStmt_ClassMethod(\PhpParser\Node\Stmt\ClassMethod $node): string
     {
         $this->cur_ln = $node->getLine();
         $ret = $this->addAttributeGroupsBeforeStatement($node);
@@ -278,7 +280,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . (null !== $node->stmts ? '{' . $this->pStmts($node->stmts) . '}' : ';');
     }
 
-    protected function pStmt_Function(\PhpParser\Node\Stmt\Function_ $node)
+    protected function pStmt_Function(\PhpParser\Node\Stmt\Function_ $node): string
     {
         $this->cur_ln = $node->getLine();
         $ret = $this->addAttributeGroupsBeforeStatement($node);
@@ -290,7 +292,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . '{' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_If(\PhpParser\Node\Stmt\If_ $node)
+    protected function pStmt_If(\PhpParser\Node\Stmt\If_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'if (' . $this->p($node->cond) . ') {'
@@ -299,19 +301,19 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . (null !== $node->else ? ' ' . $this->p($node->else) : '');
     }
 
-    protected function pStmt_ElseIf(\PhpParser\Node\Stmt\ElseIf_ $node)
+    protected function pStmt_ElseIf(\PhpParser\Node\Stmt\ElseIf_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'elseif (' . $this->p($node->cond) . ') {'
             . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_Else(\PhpParser\Node\Stmt\Else_ $node)
+    protected function pStmt_Else(\PhpParser\Node\Stmt\Else_ $node): string
     {
         return 'else {' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_For(\PhpParser\Node\Stmt\For_ $node)
+    protected function pStmt_For(\PhpParser\Node\Stmt\For_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'for ('
@@ -321,7 +323,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . ') {' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_Foreach(\PhpParser\Node\Stmt\Foreach_ $node)
+    protected function pStmt_Foreach(\PhpParser\Node\Stmt\Foreach_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'foreach (' . $this->p($node->expr) . ' as '
@@ -330,35 +332,35 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_While(\PhpParser\Node\Stmt\While_ $node)
+    protected function pStmt_While(\PhpParser\Node\Stmt\While_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'while (' . $this->p($node->cond) . ') {'
             . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pStmt_Do(\PhpParser\Node\Stmt\Do_ $node)
+    protected function pStmt_Do(\PhpParser\Node\Stmt\Do_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'do {' . $this->pStmts($node->stmts)
             . '} while (' . $this->p($node->cond) . ');';
     }
 
-    protected function pStmt_Switch(\PhpParser\Node\Stmt\Switch_ $node)
+    protected function pStmt_Switch(\PhpParser\Node\Stmt\Switch_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'switch (' . $this->p($node->cond) . ') {'
             . $this->pStmts($node->cases) . '}';
     }
 
-    protected function pStmt_Case(\PhpParser\Node\Stmt\Case_ $node)
+    protected function pStmt_Case(\PhpParser\Node\Stmt\Case_ $node): string
     {
         $this->cur_ln = $node->getLine();
         return (null !== $node->cond ? 'case ' . $this->p($node->cond) : 'default') . ':'
             . $this->pStmts($node->stmts);
     }
 
-    protected function pStmt_TryCatch(\PhpParser\Node\Stmt\TryCatch $node)
+    protected function pStmt_TryCatch(\PhpParser\Node\Stmt\TryCatch $node): string
     {
         $this->cur_ln = $node->getLine();
         return 'try {' . $this->pStmts($node->stmts) . '}'
@@ -366,7 +368,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . ($node->finally !== null ? ' finally {' . $this->pStmts($node->finally->stmts) . '}' : '');
     }
 
-    protected function pStmt_Catch(\PhpParser\Node\Stmt\Catch_ $node)
+    protected function pStmt_Catch(\PhpParser\Node\Stmt\Catch_ $node): string
     {
         if ($node->var) {
             return 'catch (' . $this->pImplode($node->types, ' | ') . ' '
@@ -380,7 +382,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
 
     // Helpers
 
-    protected function pClassCommon(\PhpParser\Node\Stmt\Class_ $node, $afterClassToken)
+    protected function pClassCommon(\PhpParser\Node\Stmt\Class_ $node, $afterClassToken): string
     {
         $ret = $this->addAttributeGroupsBeforeStatement($node);
 
@@ -392,7 +394,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . '{' . $this->pStmts($node->stmts) . '}';
     }
 
-    protected function pEncapsList(array $encapsList, $quote)
+    protected function pEncapsList(array $encapsList, $quote): string
     {
         $bak_line = $this->cur_ln;
         $return = '';
@@ -411,9 +413,12 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return $return;
     }
 
-    protected function addAttributeGroupsBeforeStatement(
-        \PhpParser\Node\Stmt\Class_|\PhpParser\Node\Stmt\Function_|\PhpParser\Node\Stmt\ClassMethod $node,
-    ): string {
+    /**
+     * @param \PhpParser\Node\Stmt\Class_|\PhpParser\Node\Stmt\Function_|\PhpParser\Node\Stmt\ClassMethod $node
+     * @noinspection PhpDocSignatureInspection - PHP 7.4 compatibility
+     */
+    protected function addAttributeGroupsBeforeStatement(\PhpParser\Node\Stmt $node): string
+    {
         if (!$node->attrGroups) {
             return '';
         }
@@ -427,7 +432,11 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return $ret;
     }
 
-    protected function functionShouldReturn(\PhpParser\Node\Stmt\ClassMethod|\PhpParser\Node\Stmt\Function_ $node): bool
+    /**
+     * @param \PhpParser\Node\Stmt\ClassMethod|\PhpParser\Node\Stmt\Function_ $node
+     * @noinspection PhpDocSignatureInspection - PHP 7.4 compatibility
+     */
+    protected function functionShouldReturn(\PhpParser\Node\Stmt $node): bool
     {
         if ($node->returnType === null) {
             return false;
@@ -458,7 +467,7 @@ class SoftMocksParseErrorHandler implements \PhpParser\ErrorHandler
         $this->orig_file = $orig_file;
     }
 
-    public function handleError(\PhpParser\Error $error)
+    public function handleError(\PhpParser\Error $error): void
     {
         throw new SoftMocksParseError($this->orig_file, $error);
     }
@@ -545,6 +554,8 @@ class SoftMocks
         [\PHPUnit\Framework\TestCase::class, 'runTest'],
     ];
 
+    private static ?\PhpParser\PhpVersion $phpVersionsUsedInFiles;
+
     protected static function getEnvironment($key)
     {
         return \getenv($key);
@@ -554,8 +565,9 @@ class SoftMocks
      * Init soft mocks
      * @throws \RuntimeException
      */
-    public static function init()
+    public static function init(?\PhpParser\PhpVersion $phpVersionsUsedInFiles = null)
     {
+        self::$phpVersionsUsedInFiles = $phpVersionsUsedInFiles ?? \PhpParser\PhpVersion::getHostVersion();
         if (!self::$mocks_cache_path) {
             $mocks_cache_path = (string)static::getEnvironment('SOFT_MOCKS_CACHE_PATH');
             if (!$mocks_cache_path) {
@@ -727,7 +739,7 @@ class SoftMocks
     }
 
     /**
-     * Parser version is needed for create new files when parser version changed 
+     * Parser version is needed for create new files when parser version changed
      */
     protected static function initParserVersion()
     {
@@ -743,9 +755,7 @@ class SoftMocks
                 "Can't get installed packages for get nikic/php-parser version for for right rewritten files cache"
             );
         }
-        /** @noinspection PhpComposerExtensionStubsInspection */
         $installed = json_decode($installed_content, true);
-        /** @noinspection PhpComposerExtensionStubsInspection */
         if (json_last_error() !== \JSON_ERROR_NONE) {
             $error = '[' . json_last_error() . '] ' . json_last_error_msg();
             throw new \RuntimeException(
@@ -934,6 +944,7 @@ class SoftMocks
     public static function printBackTrace($e = null)
     {
         $str = $e ?: new \Exception();
+        /** @noinspection PhpUndefinedClassInspection - PHPUnit 8 and older compatibility */
         if ($str instanceof \PHPUnit_Framework_ExceptionWrapper || $str instanceof \PHPUnit\Framework\ExceptionWrapper) {
             $trace = [];
             foreach ($str->getSerializableTrace() as $idx => $frame) {
@@ -962,7 +973,7 @@ class SoftMocks
             );
 
             $ln = str_replace('[internal function]', '', $ln);
-            $ln = preg_replace('/^\\#\\d+\\s*\\:?\\s*/s', '', $ln);
+            $ln = preg_replace('/^#\\d+\\s*:?\\s*/', '', $ln);
         }
 
         echo "(use REAL_BACKTRACE=1 to get real trace) " . implode(
@@ -1547,7 +1558,11 @@ class SoftMocks
             if (self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'] instanceof \Closure) {
                 $callable = self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'];
             } else {
-                $callable = eval("return function(" . self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['args'] . ") use(\$params) { " . self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code'] . " };");
+                $callable = eval(sprintf(
+                    "return function(%s) use(\$params) { %s };",
+                    self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['args'],
+                    self::$lang_construct_mocks[self::LANG_CONSTRUCT_EXIT]['code']
+                ));
             }
             return call_user_func($callable, $code);
         }
@@ -1564,7 +1579,11 @@ class SoftMocks
                 if (self::$func_mocks[$ns_func]['code'] instanceof \Closure) {
                     $func_callable = self::$func_mocks[$ns_func]['code'];
                 } else {
-                    $func_callable = eval("return function(" . self::$func_mocks[$ns_func]['args'] . ") use (\$params) { " . self::$func_mocks[$ns_func]['code'] . " };");
+                    $func_callable = eval(sprintf(
+                        "return function(%s) use (\$params) { %s };",
+                        self::$func_mocks[$ns_func]['args'],
+                        self::$func_mocks[$ns_func]['code']
+                    ));
                 }
 
                 return call_user_func_array($func_callable, $params);
@@ -1582,7 +1601,11 @@ class SoftMocks
                 if (self::$func_mocks[$func]['code'] instanceof \Closure) {
                     $func_callable = self::$func_mocks[$func]['code'];
                 } else {
-                    $func_callable = eval("return function(" . self::$func_mocks[$func]['args'] . ") use (\$params) { " . self::$func_mocks[$func]['code'] . " };");
+                    $func_callable = eval(sprintf(
+                        "return function(%s) use (\$params) { %s };",
+                        self::$func_mocks[$func]['args'],
+                        self::$func_mocks[$func]['code']
+                    ));
                 }
                 return call_user_func_array($func_callable, $params);
             }
@@ -1720,7 +1743,7 @@ class SoftMocks
                     if (\method_exists($Exception, 'getPrevious') && $Exception->getPrevious()) {
                         // If there's an underlying error (e.g. an exception thrown during autoloading) - we need to pass it
                         throw $Exception->getPrevious();
-                    } else {/* if we add new constant */}
+                    } /** @noinspection PhpStatementHasEmptyBodyInspection */ else {/* if we add new constant */}
                 }
                 if (!$declaring_class) {
                     $declaring_class = false;
@@ -1749,10 +1772,10 @@ class SoftMocks
         $traverser->addVisitor(new \PhpParser\NodeVisitor\NameResolver());
         $traverser->addVisitor(new SoftMocksTraverser($orig_file));
 
-        $prettyPrinter = new SoftMocksPrinter();
+        $prettyPrinter = new SoftMocksPrinter(['phpVersion' => self::$phpVersionsUsedInFiles]);
         $errorHandler = new SoftMocksParseErrorHandler($orig_file);
 
-        $parser = (new \PhpParser\ParserFactory)->create(\PhpParser\ParserFactory::ONLY_PHP7, new \PhpParser\Lexer());
+        $parser = (new \PhpParser\ParserFactory)->createForVersion(self::$phpVersionsUsedInFiles);
         $stmts = $parser->parse($contents, $errorHandler);
         $stmts = $traverser->traverse($stmts);
 
@@ -2146,7 +2169,7 @@ class SoftMocks
 
     /**
      * @param \ReflectionClass $Rc
-     * @return \ReflectionClass[]
+     * @return \Generator<\ReflectionClass>
      */
     private static function recursiveGetTraits(\ReflectionClass $Rc)
     {
@@ -2444,6 +2467,10 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
 
     public static function isEnumCase(string $constantName): bool
     {
+        if (!function_exists('enum_exists')) {
+            return false;
+        }
+
         [$className,] = explode('::', $constantName);
         if (enum_exists($className, false) && defined($constantName)) {
             if (constant($constantName) instanceof $className) {
@@ -2480,20 +2507,20 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         );
     }
 
-    public function enterNode(\PhpParser\Node $Node)
+    public function enterNode(\PhpParser\Node $node)
     {
-        $callback = [$this, 'before' . ucfirst($Node->getType())];
+        $callback = [$this, 'before' . ucfirst($node->getType())];
         if (is_callable($callback)) {
-            return call_user_func_array($callback, [$Node]);
+            return call_user_func_array($callback, [$node]);
         }
         return null;
     }
 
-    public function leaveNode(\PhpParser\Node $Node)
+    public function leaveNode(\PhpParser\Node $node)
     {
-        $callback = [$this, 'rewrite' . ucfirst($Node->getType())];
+        $callback = [$this, 'rewrite' . ucfirst($node->getType())];
         if (is_callable($callback)) {
-            return call_user_func_array($callback, [$Node]);
+            return call_user_func_array($callback, [$node]);
         }
         return null;
     }
@@ -2520,10 +2547,20 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $this->disable_const_rewrite_level--;
     }
 
+    public function beforePropertyItem()
+    {
+        $this->beforeStmt_PropertyProperty();
+    }
+
     // Cannot rewrite constants that are used as default values in property declarations
     public function beforeStmt_PropertyProperty()
     {
         $this->disable_const_rewrite_level++;
+    }
+
+    public function rewritePropertyItem()
+    {
+        $this->rewriteStmt_PropertyProperty();
     }
 
     public function rewriteStmt_PropertyProperty()
@@ -2531,10 +2568,20 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $this->disable_const_rewrite_level--;
     }
 
+    public function beforeStaticVar()
+    {
+        $this->beforeStmt_StaticVar();
+    }
+
     // Cannot rewrite constants that are used as default values in static variable declarations
     public function beforeStmt_StaticVar()
     {
         $this->disable_const_rewrite_level++;
+    }
+
+    public function rewriteStaticVar()
+    {
+        $this->rewriteStmt_StaticVar();
     }
 
     public function rewriteStmt_StaticVar()
@@ -2688,12 +2735,6 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
             return null;
         }
 
-        // if (false !== ($__softmocksvariableforcode = \Badoo\SoftMocks::isMocked("self"::class, static::class, __FUNCTION__))) {
-        //     $params = [/* variables with references to them */];
-        //     $mm_func_args = func_get_args();
-        //     $variadic_params_idx = '' || '<idx_of variadic_params>'
-        //     return eval($__softmocksvariableforcode);
-        // }/** @codeCoverageIgnore */
         $static = new \PhpParser\Node\Arg(
             new \PhpParser\Node\Expr\ClassConstFetch(
                 new \PhpParser\Node\Name("static"),
@@ -3102,6 +3143,11 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         return $NewNode;
     }
 
+    public function rewriteScalar_InterpolatedString(\PhpParser\Node\Scalar\InterpolatedString $node)
+    {
+        return $this->rewriteScalar_Encapsed($node);
+    }
+
     public function rewriteScalar_Encapsed(\PhpParser\Node\Scalar\Encapsed $Node)
     {
         $parts = $Node->parts;
@@ -3109,7 +3155,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         $update_required = false;
         foreach ($parts as &$part) {
             if ($part instanceof \PhpParser\Node\Expr\StaticCall) {
-                if (implode('\\', $part->class->parts) === '\\' . SoftMocks::class) {
+                if ($part->class->name === '\\' . SoftMocks::class) {
                     $update_required = true;
                 }
             } elseif ($part instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {

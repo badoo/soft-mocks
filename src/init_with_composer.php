@@ -22,20 +22,29 @@ if (!$composer_install) {
 
 $php_parser_dir = dirname($composer_install) . '/nikic/php-parser/lib/PhpParser/';
 // workaround for right load files, because now PhpParser uses composer autoload, which should be init later
-require_once "{$php_parser_dir}Parser.php";
-require_once "{$php_parser_dir}ParserAbstract.php";
-require_once "{$php_parser_dir}PrettyPrinterAbstract.php";
 require_once "{$php_parser_dir}Builder.php";
 require_once "{$php_parser_dir}Builder/Declaration.php";
-require_once "{$php_parser_dir}NodeVisitor.php";
-require_once "{$php_parser_dir}NodeVisitorAbstract.php";
-require_once "{$php_parser_dir}NodeTraverserInterface.php";
 require_once "{$php_parser_dir}Node.php";
 require_once "{$php_parser_dir}NodeAbstract.php";
+require_once "{$php_parser_dir}Node/Expr.php";
 require_once "{$php_parser_dir}Lexer/TokenEmulator/TokenEmulator.php";
 require_once "{$php_parser_dir}Lexer/TokenEmulator/KeywordEmulator.php";
-require_once "{$php_parser_dir}Node/Expr.php";
+require_once "{$php_parser_dir}Node/Expr/ArrayItem.php";
 require_once "{$php_parser_dir}Node/FunctionLike.php";
+require_once "{$php_parser_dir}Node/Expr/ClosureUse.php";
+require_once "{$php_parser_dir}Node/Scalar/EncapsedStringPart.php";
+require_once "{$php_parser_dir}Node/Scalar.php";
+require_once "{$php_parser_dir}Node/Scalar/LNumber.php";
+require_once "{$php_parser_dir}Node/Stmt/DeclareDeclare.php";
+require_once "{$php_parser_dir}Node/Stmt/PropertyProperty.php";
+require_once "{$php_parser_dir}Node/Stmt/StaticVar.php";
+require_once "{$php_parser_dir}NodeTraverserInterface.php";
+require_once "{$php_parser_dir}NodeVisitor.php";
+require_once "{$php_parser_dir}NodeVisitorAbstract.php";
+require_once "{$php_parser_dir}Parser.php";
+require_once "{$php_parser_dir}ParserAbstract.php";
+require_once "{$php_parser_dir}PrettyPrinter.php";
+require_once "{$php_parser_dir}PrettyPrinterAbstract.php";
 // for prevent autoload problems
 $files = [];
 exec('find ' . escapeshellarg($php_parser_dir) . " -type f -name '*.php'", $files);
