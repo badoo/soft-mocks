@@ -1,5 +1,12 @@
 # SoftMocks ChangeLog
 
+## 4.0.1
+
+Changes:
+
+- Stopped removing 'never' return type from rewritten code. This had to be done in order to comply with strict PHP
+  method inheritance rules, which forbid replacing 'never' return type with anything else in child methods.
+
 ## 4.0.0
 
 Changes:
