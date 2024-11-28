@@ -28,18 +28,28 @@ class testThings
     ) {
     }
 
-    public function testStoppingProgramFlow(): never
+    public function testStoppingProgramFlowWithExit(): never
     {
         $value = 1 + 2;
 
         exit(666);
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testStoppingProgramFlowWithException(): never
+    {
+        $value = 1 + 2;
+
+        throw new \Exception('Some exception');
+    }
+
     public function testMakeFunctionClosureWithSpreadOperator(One & Three $typeIntersection): void
     {
         $closureOne = array_merge(...);
         $closureTwo = something(...);
-        $closureThree = $this->testStoppingProgramFlow(...);
+        $closureThree = $this->testStoppingProgramFlowWithExit(...);
 
         $closureOne(['will'], ['be'], ['merged'], ['some new octal notation:', 0o16, 0O33]);
         $closureTwo($typeIntersection, $typeIntersection);
@@ -50,7 +60,12 @@ function testTypeIntersectionInFunction(One & Three $typeIntersection)
 {
 }
 
-function neverReturns(): never
+function neverReturnsWithExit(): never
 {
     exit(111);
+}
+
+function neverReturnsWithException(): never
+{
+    throw new \RuntimeException('Some runtime exception');
 }
