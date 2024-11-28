@@ -276,7 +276,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
             . $this->pModifiers($node->flags)
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
-            . ($this->functionShouldReturn($node) ? ' : ' . $this->p($node->returnType) : '')
+            . ($this->functionShouldHaveReturnType($node) ? ' : ' . $this->p($node->returnType) : '')
             . (null !== $node->stmts ? '{' . $this->pStmts($node->stmts) . '}' : ';');
     }
 
@@ -288,7 +288,7 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
         return $ret
             . 'function ' . ($node->byRef ? '&' : '') . $node->name
             . '(' . $this->pCommaSeparated($node->params) . ')'
-            . ($this->functionShouldReturn($node) ? ' : ' . $this->p($node->returnType) : '')
+            . ($this->functionShouldHaveReturnType($node) ? ' : ' . $this->p($node->returnType) : '')
             . '{' . $this->pStmts($node->stmts) . '}';
     }
 
@@ -436,17 +436,9 @@ class SoftMocksPrinter extends \PhpParser\PrettyPrinter\Standard
      * @param \PhpParser\Node\Stmt\ClassMethod|\PhpParser\Node\Stmt\Function_ $node
      * @noinspection PhpDocSignatureInspection - PHP 7.4 compatibility
      */
-    protected function functionShouldReturn(\PhpParser\Node\Stmt $node): bool
+    protected function functionShouldHaveReturnType(\PhpParser\Node\Stmt $node): bool
     {
-        if ($node->returnType === null) {
-            return false;
-        }
-
-        if ($node->returnType instanceof \PhpParser\Node\Identifier && $node->returnType->name === 'never') {
-            return false;
-        }
-
-        return true;
+        return $node->returnType !== null;
     }
 }
 
@@ -2790,7 +2782,7 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
         //     $mm_callback = SoftMocks::getMockForGenerator();
         //     foreach ($mm_callback(...) as $mm_val) { yield $mm_val; }
         //
-        // also functions with void return type declarations cannot return values
+        // also functions with 'void' or 'never' return type declarations cannot return values
         if ($this->has_yield) {
             $args = [$static, $function];
 
@@ -2845,9 +2837,12 @@ class SoftMocksTraverser extends \PhpParser\NodeVisitorAbstract
                 new \PhpParser\Node\Expr\Variable("__softmocksvariableforcode")
             );
 
-            if ($Node->returnType instanceof \PhpParser\Node\Identifier && $Node->returnType->name === 'void') {
+            $returnTypeName = $Node->returnType instanceof \PhpParser\Node\Identifier ? $Node->returnType->name : null;
+            if ($returnTypeName === 'void') {
                 $body_stmts[] = new \PhpParser\Node\Stmt\Expression($eval);
                 $body_stmts[] = new \PhpParser\Node\Stmt\Return_();
+            } elseif ($returnTypeName === 'never') {
+                $body_stmts[] = new \PhpParser\Node\Stmt\Expression($eval);
             } else {
                 $body_stmts[] = new \PhpParser\Node\Stmt\Return_($eval);
             }
