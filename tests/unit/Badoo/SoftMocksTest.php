@@ -4,6 +4,11 @@
  * @author Kirill Abrosimov <k.abrosimov@corp.badoo.com>
  * @author Oleg Efimov <o.efimov@corp.badoo.com>
  * @author Rinat Akhmadeev <r.akhmadeev@corp.badoo.com>
+ *
+ * @noinspection PhpExpressionResultUnusedInspection
+ * @noinspection PhpUndefinedMethodInspection
+ * @noinspection PhpMissingReturnTypeInspection
+ * @noinspection PhpUnitMisorderedAssertEqualsArgumentsInspection
  */
 namespace Badoo\SoftMock\Tests;
 
@@ -46,7 +51,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::redefineExit(
             '',
             function ($code) {
-                throw new \Exception("exit called: {$code}");
+                throw new \Exception("exit called: $code");
             }
         );
         try {
@@ -653,7 +658,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertSame(50, ConstantRedeclareForthTestClass::getForthStaticValue());
     }
 
-    public function testRedifineBaseClassConstantAndRemoveRestoreOtherClassConstants()
+    public function testRedefineBaseClassConstantAndRemoveRestoreOtherClassConstants()
     {
         \Badoo\SoftMocks::redefineConstant(
             ConstantRedeclareBaseTestClass::class . '::VALUE',
@@ -1435,6 +1440,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
      * @dataProvider dataProviderResolveFile
      * @param $file
      * @param $expected_result
+     * @throws \ReflectionException
      */
     public function testResolveFile($file, $expected_result)
     {
@@ -1449,6 +1455,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertSame($expected_result, $result);
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     public function testResolveFileFileShouldNotBeEmptyException()
     {
         if (\method_exists($this, 'expectException')) {
@@ -1461,10 +1470,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $this->getPrepareFilePathToRewriteMethod()->invoke(null, '');
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     public function testResolveAbsoluteFilePathNotResolvedException()
     {
         $file = __DIR__ . '/fixtures/original/__unknown.php';
-        $exception_message = "Can't resolve file '{$file}'";
+        $exception_message = "Can't resolve file '$file'";
         if (\method_exists($this, 'expectExceptionMessage')) {
             $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage($exception_message);
@@ -1475,10 +1487,13 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $this->getPrepareFilePathToRewriteMethod()->invoke(null, $file);
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     public function testResolveRelativeFilePathNotResolvedException()
     {
         $file = 'unit/Badoo/fixtures/original/php7.php';
-        $exception_message = "Can't resolve file '{$file}'";
+        $exception_message = "Can't resolve file '$file'";
         if (\method_exists($this, 'expectExceptionMessage')) {
             $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage($exception_message);
@@ -1608,10 +1623,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerWithOrWithoutMock
-     *
-     * @param bool $set_mock
      */
-    public function testWithWrongPrivateConstantAccessPHP71($set_mock)
+    public function testWithWrongPrivateConstantAccessPHP71(bool $set_mock)
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -1629,10 +1642,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerWithOrWithoutMock
-     *
-     * @param bool $set_mock
      */
-    public function testWithWrongPrivateConstantAccessFromFunctionPHP71($set_mock)
+    public function testWithWrongPrivateConstantAccessFromFunctionPHP71(bool $set_mock)
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -1650,10 +1661,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerWithOrWithoutMock
-     *
-     * @param bool $set_mock
      */
-    public function testWithWrongParentPrivateConstantAccessPHP71($set_mock)
+    public function testWithWrongParentPrivateConstantAccessPHP71(bool $set_mock)
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -1738,10 +1747,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerWithOrWithoutMock
-     *
-     * @param bool $set_mock
      */
-    public function testWithWrongProtectedConstantAccessPHP71($set_mock)
+    public function testWithWrongProtectedConstantAccessPHP71(bool $set_mock)
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -1759,10 +1766,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerWithOrWithoutMock
-     *
-     * @param bool $set_mock
      */
-    public function testWithWrongProtectedConstantAccessFromFunctionPHP71($set_mock)
+    public function testWithWrongProtectedConstantAccessFromFunctionPHP71(bool $set_mock)
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -2197,7 +2202,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         static::assertSame(50, ConstantRedeclareForthPHP71TestClass::getForthStaticValue());
     }
 
-    public function testRedifineBaseClassConstantAndRemoveRestoreOtherClassConstantsPHP71()
+    public function testRedefineBaseClassConstantAndRemoveRestoreOtherClassConstantsPHP71()
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -2652,10 +2657,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerWithOrWithoutMock
-     *
-     * @param bool $set_mock
      */
-    public function testArrayDestructingPHP71($set_mock)
+    public function testArrayDestructingPHP71(bool $set_mock)
     {
         static::markTestSkippedForPHPVersionBelow('7.1.0');
 
@@ -2720,6 +2723,10 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
             static::markTestSkippedForPHPVersionBelow('8.2.0');
         }
 
+        if ($filename === 'array_with_functions_inside_function.php') {
+            static::markTestSkipped('This fails to generate correct lines due to design flaw in Soft Mocks.');
+        }
+
         $result = \Badoo\SoftMocks::rewrite(__DIR__ . '/fixtures/original/' . $filename);
         $this->assertNotFalse($result, "Rewrite failed");
 
@@ -2774,6 +2781,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         );
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     public function testGetDeclaringTrait()
     {
         $soft_mocks = new \ReflectionClass(\Badoo\SoftMocks::class);
@@ -2805,11 +2815,8 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider providerClassWithIsCallable
-     *
-     * @param callable $callable
-     * @param bool $expected_result
      */
-    public function testClassWithIsCallable($callable, $expected_result)
+    public function testClassWithIsCallable($callable, bool $expected_result)
     {
         $this->assertSame($expected_result, ClassWithIsCallable::check($callable));
     }
@@ -2848,7 +2855,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
     {
         $filename = __DIR__ . '/fixtures/invalid_fatal/' . $filename;
 
-        $exception_message = "File: {$filename}, message: File: {$filename}";
+        $exception_message = "File: $filename, message: File: $filename";
         if (\method_exists($this, 'expectExceptionMessage')) {
             $this->expectException(\Badoo\SoftMocksParseError::class);
             $this->expectExceptionMessage($exception_message);
@@ -2860,6 +2867,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::rewrite($filename);
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function testInvalidRedefine()
     {
         self::markTestSkippedForPHPVersionAbove('8.0');
@@ -2871,7 +2881,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         } else {
             $warning_class = \PHPUnit_Framework_Error_Warning::class;
         }
-        
+
         if (\method_exists($this, 'expectExceptionMessage')) {
             $this->expectException($warning_class);
             $this->expectExceptionMessage($exception_message);
@@ -2888,6 +2898,9 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         );
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function testExceptionInBody()
     {
         $exception_message = "real exception";
@@ -2935,7 +2948,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::redefineConstant(ClassToTestPauseResume::class . '::A_inside_pause', $new_result_A);
         \Badoo\SoftMocks::redefineConstant(ClassToTestPauseResume::class . '::B_inside_pause', $new_result_B);
         \Badoo\SoftMocks::removeConstant(ClassToTestPauseResume::class . '::C_inside_pause');
-    
+
         $this->assertEquals($old_result_A, ClassToTestPauseResume::A_inside_pause);
         $this->assertTrue(!defined(ClassToTestPauseResume::class . '::B_inside_pause'));
         $this->assertTrue(defined(ClassToTestPauseResume::class . '::C_inside_pause'));
@@ -2946,13 +2959,15 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($new_result_A, ClassToTestPauseResume::A);
         $this->assertTrue(defined(ClassToTestPauseResume::class . '::B'));
         if (defined('ClassToTestPauseResume::B')) {
+            /** @noinspection PhpUndefinedClassConstantInspection */
             $this->assertEquals($new_result_B, ClassToTestPauseResume::B);
         }
         $this->assertTrue(!defined(ClassToTestPauseResume::class . '::C'));
-    
+
         $this->assertEquals($new_result_A, ClassToTestPauseResume::A_inside_pause);
         $this->assertTrue(defined(ClassToTestPauseResume::class . '::B_inside_pause'));
         if (defined('ClassToTestPauseResume::B_inside_pause')) {
+            /** @noinspection PhpUndefinedClassConstantInspection */
             $this->assertEquals($new_result_B, ClassToTestPauseResume::B_inside_pause);
         }
         $this->assertTrue(!defined(ClassToTestPauseResume::class . '::C_inside_pause'));
@@ -2976,7 +2991,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::resume();
 
         $this->assertEquals($new_result, functionToTestPauseResume());
-        
+
         $this->assertEquals($new_result, functionToTestPauseResumeInsidePause());
     }
 
@@ -2998,7 +3013,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         \Badoo\SoftMocks::resume();
 
         $this->assertEquals($new_result, $class->method());
-        
+
         $this->assertEquals($new_result, $class->methodInsidePause());
     }
 
@@ -3016,11 +3031,11 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $class = new ClassToTestPauseResume();
         // pause environment
         \Badoo\SoftMocks::pause();
-        
+
         $values = [];
         foreach ($class->generator() as $item) $values[] = $item;
         $this->assertEquals($values, [$old_result]);
-    
+
         // do redefine inside pause
         \Badoo\SoftMocks::redefineGenerator(ClassToTestPauseResume::class, 'generatorInsidePause', [$this, 'generatorForReplace']);
         $values_inside_pause = [];
@@ -3032,7 +3047,7 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         $values = [];
         foreach ($class->generator() as $item) $values[] = $item;
         $this->assertEquals($values, [$new_result]);
-    
+
         $values_inside_pause = [];
         foreach ($class->generatorInsidePause() as $item) $values_inside_pause[] = $item;
         $this->assertEquals($values_inside_pause, [$new_result]);
@@ -3150,5 +3165,26 @@ class SoftMocksTest extends \PHPUnit\Framework\TestCase
         }
 
         $this->fail("Redefining enum cases using redefineConstant() should be blocked.");
+    }
+
+    public function testDoNotStripBacktraceItemsThatContainPhpunitInNameOutsideOfTheFramework(): void
+    {
+        require_once __DIR__ . '/ClassContainsPhpunitName.php';
+        $backtrace = ClassContainsPhpunitName::getBacktrace();
+        $this->assertStringContainsString(
+            'SoftMocksTest.php',
+            $backtrace,
+            'Entry for this test class is not present.'
+        );
+        $this->assertStringContainsString(
+            'ClassContainsPhpunitName.php',
+            $backtrace,
+            'Entry for the class containing "phpunit" in the name is not present.'
+        );
+        $this->assertStringNotContainsString(
+            'phpunit/phpunit',
+            $backtrace,
+            'Entries for PHPUnit internal classes are present.'
+        );
     }
 }

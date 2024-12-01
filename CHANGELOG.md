@@ -1,5 +1,11 @@
 # SoftMocks ChangeLog
 
+## 4.0.2
+
+Changes:
+
+- Make check for removing 'phpunit' from generated backtrace more strict, to prevent false positives.
+
 ## 4.0.1
 
 Changes:
@@ -10,12 +16,12 @@ Changes:
 ## 4.0.0
 
 Changes:
+
 - Minimum PHP version is now `7.4`.
 - Updated `nikic/php-parser` from version `^4.19.1` to `^5.3.1`.
 - Soft Mocks now automatically uses PHP Parser for currently installed PHP version. This should work well for most
-  use cases, but can still be overwritten by passing a parameter to `\Badoo\SoftMocks::init()`  
-- Fixed an error where heredoc or nowdoc comments would cause the rewritten file to have code at incorrect lines. 
-
+  use cases, but can still be overwritten by passing a parameter to `\Badoo\SoftMocks::init()`
+- Fixed an error where heredoc or nowdoc comments would cause the rewritten file to have code at incorrect lines.
 
 ## 3.7
 

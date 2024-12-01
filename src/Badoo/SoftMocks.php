@@ -976,7 +976,7 @@ class SoftMocks
                     $parts = explode('(', trim($str), 2);
                     if (count($parts) > 1) {
                         $filename = $parts[0];
-                        if (stripos($filename, 'PHPUnit') !== false) {
+                        if (stripos(dirname($filename), 'phpunit/phpunit') !== false) {
                             return false;
                         }
                     }
